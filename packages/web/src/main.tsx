@@ -12,6 +12,24 @@ const router = createBrowserRouter([
 
       return { Component: App }
     },
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { HomePage } = await import('@/pages/home/home-page')
+
+          return { Component: HomePage }
+        },
+      },
+      {
+        path: 'canvas/:canvasId',
+        lazy: async () => {
+          const { CanvasPage } = await import('@/pages/canvas/canvas-page')
+
+          return { Component: CanvasPage }
+        },
+      },
+    ],
   },
 ])
 

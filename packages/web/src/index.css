@@ -90,6 +90,180 @@
 }
 
 @layer components {
+  .home-page {
+    @apply min-h-dvh bg-zinc-50 text-foreground;
+  }
+
+  .home-header {
+    @apply flex h-16 items-center justify-between border-b bg-white px-5;
+  }
+
+  .home-brand {
+    @apply flex items-center gap-2.5 text-sm no-underline;
+  }
+
+  .home-brand > span,
+  .canvas-header__brand {
+    @apply grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-xs font-semibold text-background;
+  }
+
+  .home-brand strong {
+    @apply font-semibold;
+  }
+
+  .home-header__actions {
+    @apply flex items-center gap-2;
+  }
+
+  .home-avatar {
+    @apply ml-1 grid size-8 place-items-center rounded-full border bg-emerald-50 text-[11px] font-semibold text-emerald-800;
+  }
+
+  .home-content {
+    @apply mx-auto w-full max-w-6xl px-6 py-10;
+  }
+
+  .home-titlebar {
+    @apply mb-6 flex items-end justify-between;
+  }
+
+  .home-titlebar p {
+    @apply mb-1 mt-0 text-xs font-medium uppercase text-muted-foreground;
+  }
+
+  .home-titlebar h1 {
+    @apply m-0 text-2xl font-semibold;
+    letter-spacing: 0;
+  }
+
+  .home-titlebar > span {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .workspace-grid {
+    @apply grid grid-cols-3 gap-4;
+  }
+
+  .workspace-card {
+    @apply relative overflow-hidden rounded-lg border bg-card shadow-xs transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  .workspace-card > a {
+    @apply block text-inherit no-underline;
+  }
+
+  .workspace-card__preview {
+    @apply relative h-40 overflow-hidden border-b bg-zinc-100;
+    background-image: radial-gradient(circle, rgb(161 161 170 / 32%) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+
+  .workspace-card__preview::after {
+    @apply absolute inset-x-0 bottom-0 h-10;
+    content: '';
+    background: linear-gradient(to bottom, transparent, rgb(250 250 250 / 75%));
+  }
+
+  .workspace-card__team {
+    @apply absolute left-[12%] top-[18%] h-[64%] w-[73%] rounded-md border border-dashed border-zinc-400/70 bg-white/45;
+  }
+
+  .workspace-card__team span {
+    @apply absolute left-3 h-1.5 rounded-full bg-zinc-300;
+  }
+
+  .workspace-card__team span:nth-child(1) { @apply top-3 w-12 bg-zinc-500; }
+  .workspace-card__team span:nth-child(2) { @apply top-7 w-7; }
+  .workspace-card__team span:nth-child(3) { @apply right-3 top-3 size-3 rounded-sm; left: auto; }
+
+  .workspace-card__agent {
+    @apply absolute z-10 h-[54px] w-[86px] rounded-md border bg-white p-2 shadow-sm;
+  }
+
+  .workspace-card__agent--one { @apply left-[21%] top-[47%]; }
+  .workspace-card__agent--two { @apply right-[20%] top-[36%]; }
+
+  .workspace-card__agent span {
+    @apply float-left mr-2 grid size-6 place-items-center rounded-sm text-[8px] font-bold text-white;
+  }
+
+  [data-accent='coral'] .workspace-card__agent span { @apply bg-rose-500; }
+  [data-accent='green'] .workspace-card__agent span { @apply bg-emerald-600; }
+  [data-accent='blue'] .workspace-card__agent span { @apply bg-sky-600; }
+
+  .workspace-card__agent i {
+    @apply mt-1 block h-1.5 rounded-full bg-zinc-200;
+  }
+
+  .workspace-card__agent i:last-child { @apply w-8; }
+
+  .workspace-card__preview svg {
+    @apply absolute inset-0 z-0 h-full w-full fill-none stroke-zinc-400;
+    stroke-width: 1.5;
+    stroke-dasharray: 3 3;
+  }
+
+  .workspace-card__body {
+    @apply p-4;
+  }
+
+  .workspace-card__title {
+    @apply flex items-start justify-between gap-3;
+  }
+
+  .workspace-card__title > svg {
+    @apply mt-0.5 size-4 shrink-0 text-zinc-400 transition-colors group-hover:text-foreground;
+  }
+
+  .workspace-card__title h2 {
+    @apply m-0 text-sm font-semibold;
+  }
+
+  .workspace-card__title p {
+    @apply mb-0 mt-1 truncate text-xs text-muted-foreground;
+  }
+
+  .workspace-card__meta {
+    @apply mt-4 flex items-center gap-3 border-t pt-3 text-[11px] text-muted-foreground;
+  }
+
+  .workspace-card__meta span {
+    @apply flex items-center gap-1;
+  }
+
+  .workspace-card__meta span:last-child {
+    @apply ml-auto;
+  }
+
+  .workspace-card__meta svg {
+    @apply size-3;
+  }
+
+  .workspace-card__menu {
+    @apply absolute right-2 top-2 z-20 border bg-white/90 opacity-0 shadow-xs transition-opacity group-hover:opacity-100;
+  }
+
+  .workspace-card:hover .workspace-card__menu,
+  .workspace-card__menu:focus-visible {
+    @apply opacity-100;
+  }
+
+  .new-workspace-card {
+    @apply flex min-h-[274px] flex-col items-center justify-center rounded-lg border border-dashed bg-white/40 text-center text-foreground no-underline transition-colors hover:border-zinc-400 hover:bg-white;
+  }
+
+  .new-workspace-card > span {
+    @apply mb-3 grid size-9 place-items-center rounded-md border bg-white shadow-xs;
+  }
+
+  .new-workspace-card svg { @apply size-4; }
+  .new-workspace-card strong { @apply text-sm font-medium; }
+  .new-workspace-card small { @apply mt-1 text-xs text-muted-foreground; }
+
+  .canvas-header {
+    @apply absolute inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b bg-background px-3 shadow-xs;
+  }
+
   .agent-composer {
     @apply absolute right-3 top-16 z-30 w-[380px] max-w-[calc(100vw-24px)] border bg-background p-4 shadow-lg;
     border-radius: var(--radius);
@@ -276,17 +450,44 @@
 }
 
 @media (max-width: 640px) {
-  header > div:first-child input {
+  .home-header {
+    @apply px-3;
+  }
+
+  .home-brand strong,
+  .home-header__actions > a {
+    @apply hidden;
+  }
+
+  .home-content {
+    @apply px-4 py-7;
+  }
+
+  .home-titlebar {
+    @apply items-start;
+  }
+
+  .workspace-grid {
+    @apply grid-cols-1;
+  }
+
+  .canvas-header > div:first-child input {
     width: 100px;
   }
 
-  header button:not([aria-label]) {
+  .canvas-header button:not([aria-label]) {
     width: 32px;
     padding: 0;
     font-size: 0;
   }
 
-  header button:not([aria-label]) svg {
+  .canvas-header button:not([aria-label]) svg {
     margin: 0;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .workspace-grid {
+    @apply grid-cols-2;
   }
 }

@@ -8,8 +8,16 @@
   },
   "scripts": {
     "dev": "pnpm --filter @agent-weave/web dev",
+    "dev:web": "pnpm --filter @agent-weave/web dev",
+    "dev:server": "pnpm --filter @agent-weave/contracts build && pnpm --filter @agent-weave/server dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm --filter @agent-weave/contracts build && pnpm -r typecheck",
+    "test": "pnpm --filter @agent-weave/contracts build && pnpm -r test"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6"
   }
 }

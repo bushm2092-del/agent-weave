@@ -1,0 +1,33 @@
+{
+  "name": "@agent-weave/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch --import=tsx src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "lint": "oxlint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/**/*.test.ts"
+  },
+  "dependencies": {
+    "@agent-weave/contracts": "workspace:*",
+    "acpx": "^0.13.1",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.13.3",
+    "@types/supertest": "^6.0.3",
+    "oxlint": "^1.79.0",
+    "supertest": "^7.1.4",
+    "tsx": "^4.23.1",
+    "typescript": "~7.0.2"
+  }
+}

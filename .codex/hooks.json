@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .codex/hooks/format-after-write.mjs",
+            "timeout": 30,
+            "statusMessage": "Formatting changed files with Prettier"
+          }
+        ]
+      }
+    ]
+  }
+}

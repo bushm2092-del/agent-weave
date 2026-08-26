@@ -2,6 +2,7 @@ node_modules/
 .pnpm-store/
 dist/
 coverage/
+.agent-weave/
 *.local
 *.log
 .DS_Store
