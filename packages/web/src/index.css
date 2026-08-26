@@ -88,3 +88,205 @@
     @apply m-0 bg-background text-foreground;
   }
 }
+
+@layer components {
+  .agent-composer {
+    @apply absolute right-3 top-16 z-30 w-[380px] max-w-[calc(100vw-24px)] border bg-background p-4 shadow-lg;
+    border-radius: var(--radius);
+  }
+
+  .agent-composer__heading,
+  .agent-composer__heading > div,
+  .agent-composer__actions {
+    @apply flex items-center;
+  }
+
+  .agent-composer__heading {
+    @apply justify-between;
+  }
+
+  .agent-composer__heading > div {
+    @apply gap-3;
+  }
+
+  .agent-composer__icon {
+    @apply grid size-9 place-items-center rounded-md bg-foreground text-background;
+  }
+
+  .agent-composer__icon svg {
+    @apply size-4;
+  }
+
+  .agent-composer h2 {
+    @apply m-0 text-sm font-semibold;
+  }
+
+  .agent-composer p {
+    @apply m-0 text-xs text-muted-foreground;
+  }
+
+  .agent-composer__field {
+    @apply mt-4 grid gap-2;
+  }
+
+  .agent-composer__field > label {
+    @apply text-xs font-medium text-muted-foreground;
+  }
+
+  .agent-runner-grid {
+    @apply grid grid-cols-2 gap-2;
+  }
+
+  .agent-runner-option {
+    @apply flex h-10 items-center gap-2 rounded-md border bg-background px-2.5 text-left text-xs font-medium transition-colors hover:bg-muted;
+  }
+
+  .agent-runner-option[data-active="true"] {
+    @apply border-foreground bg-muted;
+  }
+
+  .agent-runner-option > span {
+    @apply grid size-6 place-items-center rounded-sm text-[10px] font-semibold text-white;
+  }
+
+  .agent-composer select,
+  .agent-workspace-input {
+    @apply h-9 w-full rounded-md border bg-background px-3 text-sm outline-none focus-within:ring-2 focus-within:ring-ring;
+  }
+
+  .agent-workspace-input {
+    @apply flex items-center gap-2;
+  }
+
+  .agent-workspace-input svg {
+    @apply size-4 shrink-0 text-muted-foreground;
+  }
+
+  .agent-workspace-input input {
+    @apply min-w-0 flex-1 bg-transparent outline-none;
+  }
+
+  .agent-composer__actions {
+    @apply mt-5 justify-end gap-2 border-t pt-4;
+  }
+
+  .agent-shape,
+  .agent-team-shape {
+    box-sizing: border-box;
+    font-family: "Geist Variable", sans-serif;
+  }
+
+  .agent-shape {
+    @apply flex flex-col overflow-hidden border bg-card text-card-foreground shadow-md;
+    border-radius: 8px;
+  }
+
+  .agent-shape__header {
+    @apply flex h-14 shrink-0 items-center gap-2.5 border-b px-3;
+  }
+
+  .agent-shape__avatar {
+    @apply grid size-8 shrink-0 place-items-center rounded-md text-[11px] font-bold text-white;
+  }
+
+  .agent-shape__identity {
+    @apply min-w-0 flex-1;
+  }
+
+  .agent-shape__identity strong,
+  .agent-shape__identity span {
+    @apply block truncate;
+  }
+
+  .agent-shape__identity strong {
+    @apply text-[13px] font-semibold;
+  }
+
+  .agent-shape__identity span {
+    @apply text-[11px] text-muted-foreground;
+  }
+
+  .agent-shape__status {
+    @apply rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700;
+  }
+
+  .agent-shape__conversation {
+    @apply flex min-h-0 flex-1 flex-col justify-between gap-3 p-3;
+  }
+
+  .agent-shape__conversation p {
+    @apply m-0 rounded-md bg-muted p-2.5 text-[12px] text-muted-foreground;
+  }
+
+  .agent-shape__prompt {
+    @apply flex h-9 items-center gap-1 rounded-md border bg-background pl-3 pr-1 text-[11px] text-muted-foreground focus-within:ring-2 focus-within:ring-ring;
+    pointer-events: all;
+  }
+
+  .agent-shape__prompt input {
+    @apply min-w-0 flex-1 bg-transparent text-foreground outline-none;
+  }
+
+  .agent-shape__prompt button {
+    @apply grid size-7 shrink-0 place-items-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30;
+  }
+
+  .agent-shape__prompt button svg {
+    @apply size-3.5;
+  }
+
+  .agent-shape__meta {
+    @apply grid grid-cols-2 gap-2 border-t px-3 py-2 text-[10px] text-muted-foreground;
+  }
+
+  .agent-shape__meta span {
+    @apply truncate;
+  }
+
+  .agent-shape__meta span:last-child {
+    @apply text-right;
+  }
+
+  .agent-team-shape {
+    @apply border-2 border-dashed border-zinc-300 bg-zinc-100/70 text-foreground;
+    border-radius: 8px;
+  }
+
+  .agent-team-shape__header {
+    @apply flex h-16 items-center justify-between border-b border-zinc-300 bg-white/90 px-4;
+    border-radius: 6px 6px 0 0;
+  }
+
+  .agent-team-shape__header strong,
+  .agent-team-shape__header span {
+    @apply block;
+  }
+
+  .agent-team-shape__header strong {
+    @apply text-[14px] font-semibold;
+  }
+
+  .agent-team-shape__header div span {
+    @apply mt-0.5 text-[11px] text-muted-foreground;
+  }
+
+  .agent-team-shape__mode {
+    @apply rounded-md border bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground;
+  }
+}
+
+@media (max-width: 640px) {
+  header > div:first-child input {
+    width: 100px;
+  }
+
+  header button:not([aria-label]) {
+    width: 32px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  header button:not([aria-label]) svg {
+    margin: 0;
+  }
+}
