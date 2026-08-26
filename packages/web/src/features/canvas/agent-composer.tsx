@@ -1,40 +1,47 @@
-import { Bot, FolderOpen, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Bot, FolderOpen, X } from "lucide-react"
+import { useState } from "react"
 
-import { Button } from '@/components/ui/button'
-import {
-  AGENT_RUNNERS,
-  AGENT_RUNNER_IDS,
-  type AgentRunner,
-} from '@/features/canvas/agent-options'
+import { Button } from "@/components/ui/button"
+import { AGENT_RUNNERS, AGENT_RUNNER_IDS, type AgentRunner } from "@/features/canvas/agent-options"
 
 export type AgentDraft = {
   runner: AgentRunner
-  model: string
   workspace: string
 }
 
 type AgentComposerProps = {
   onClose: () => void
-  onCreate: (draft: AgentDraft) => void
+  onCreate: (draft: AgentDraft) => Promise<void>
 }
 
 export function AgentComposer({ onClose, onCreate }: AgentComposerProps) {
-  const [runner, setRunner] = useState<AgentRunner>('codex')
-  const models = useMemo(() => AGENT_RUNNERS[runner].models, [runner])
-  const [model, setModel] = useState<string>(AGENT_RUNNERS.codex.models[0])
-  const [workspace, setWorkspace] = useState('/workspace')
+  const [runner, setRunner] = useState<AgentRunner>("codex")
+  const [workspace, setWorkspace] = useState("")
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string>()
 
   const selectRunner = (nextRunner: AgentRunner) => {
     setRunner(nextRunner)
-    setModel(AGENT_RUNNERS[nextRunner].models[0])
+  }
+
+  const create = async () => {
+    setCreating(true)
+    setError(undefined)
+    try {
+      await onCreate({ runner, workspace: workspace.trim() })
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : "Unable to create the agent.")
+      setCreating(false)
+    }
   }
 
   return (
     <section className="agent-composer" aria-label="Create agent">
       <div className="agent-composer__heading">
         <div>
-          <span className="agent-composer__icon"><Bot /></span>
+          <span className="agent-composer__icon">
+            <Bot />
+          </span>
           <div>
             <h2>New agent</h2>
             <p>Choose a runner and workspace.</p>
@@ -69,13 +76,6 @@ export function AgentComposer({ onClose, onCreate }: AgentComposerProps) {
       </div>
 
       <div className="agent-composer__field">
-        <label htmlFor="agent-model">Model</label>
-        <select id="agent-model" value={model} onChange={(event) => setModel(event.target.value)}>
-          {models.map((item) => <option key={item}>{item}</option>)}
-        </select>
-      </div>
-
-      <div className="agent-composer__field">
         <label htmlFor="agent-workspace">Workspace</label>
         <div className="agent-workspace-input">
           <FolderOpen />
@@ -88,13 +88,14 @@ export function AgentComposer({ onClose, onCreate }: AgentComposerProps) {
         </div>
       </div>
 
+      {error && <p className="agent-composer__error">{error}</p>}
+
       <div className="agent-composer__actions">
-        <Button variant="ghost" onClick={onClose}>Cancel</Button>
-        <Button
-          disabled={!workspace.trim()}
-          onClick={() => onCreate({ runner, model, workspace: workspace.trim() })}
-        >
-          Create agent
+        <Button disabled={creating} variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button disabled={!workspace.trim() || creating} onClick={() => void create()}>
+          {creating ? "Creating..." : "Create agent"}
         </Button>
       </div>
     </section>

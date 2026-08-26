@@ -160,7 +160,7 @@
 
   .workspace-card__preview::after {
     @apply absolute inset-x-0 bottom-0 h-10;
-    content: '';
+    content: "";
     background: linear-gradient(to bottom, transparent, rgb(250 250 250 / 75%));
   }
 
@@ -172,30 +172,49 @@
     @apply absolute left-3 h-1.5 rounded-full bg-zinc-300;
   }
 
-  .workspace-card__team span:nth-child(1) { @apply top-3 w-12 bg-zinc-500; }
-  .workspace-card__team span:nth-child(2) { @apply top-7 w-7; }
-  .workspace-card__team span:nth-child(3) { @apply right-3 top-3 size-3 rounded-sm; left: auto; }
+  .workspace-card__team span:nth-child(1) {
+    @apply top-3 w-12 bg-zinc-500;
+  }
+  .workspace-card__team span:nth-child(2) {
+    @apply top-7 w-7;
+  }
+  .workspace-card__team span:nth-child(3) {
+    @apply right-3 top-3 size-3 rounded-sm;
+    left: auto;
+  }
 
   .workspace-card__agent {
     @apply absolute z-10 h-[54px] w-[86px] rounded-md border bg-white p-2 shadow-sm;
   }
 
-  .workspace-card__agent--one { @apply left-[21%] top-[47%]; }
-  .workspace-card__agent--two { @apply right-[20%] top-[36%]; }
+  .workspace-card__agent--one {
+    @apply left-[21%] top-[47%];
+  }
+  .workspace-card__agent--two {
+    @apply right-[20%] top-[36%];
+  }
 
   .workspace-card__agent span {
     @apply float-left mr-2 grid size-6 place-items-center rounded-sm text-[8px] font-bold text-white;
   }
 
-  [data-accent='coral'] .workspace-card__agent span { @apply bg-rose-500; }
-  [data-accent='green'] .workspace-card__agent span { @apply bg-emerald-600; }
-  [data-accent='blue'] .workspace-card__agent span { @apply bg-sky-600; }
+  [data-accent="coral"] .workspace-card__agent span {
+    @apply bg-rose-500;
+  }
+  [data-accent="green"] .workspace-card__agent span {
+    @apply bg-emerald-600;
+  }
+  [data-accent="blue"] .workspace-card__agent span {
+    @apply bg-sky-600;
+  }
 
   .workspace-card__agent i {
     @apply mt-1 block h-1.5 rounded-full bg-zinc-200;
   }
 
-  .workspace-card__agent i:last-child { @apply w-8; }
+  .workspace-card__agent i:last-child {
+    @apply w-8;
+  }
 
   .workspace-card__preview svg {
     @apply absolute inset-0 z-0 h-full w-full fill-none stroke-zinc-400;
@@ -256,9 +275,15 @@
     @apply mb-3 grid size-9 place-items-center rounded-md border bg-white shadow-xs;
   }
 
-  .new-workspace-card svg { @apply size-4; }
-  .new-workspace-card strong { @apply text-sm font-medium; }
-  .new-workspace-card small { @apply mt-1 text-xs text-muted-foreground; }
+  .new-workspace-card svg {
+    @apply size-4;
+  }
+  .new-workspace-card strong {
+    @apply text-sm font-medium;
+  }
+  .new-workspace-card small {
+    @apply mt-1 text-xs text-muted-foreground;
+  }
 
   .canvas-header {
     @apply absolute inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b bg-background px-3 shadow-xs;
@@ -344,6 +369,10 @@
     @apply mt-5 justify-end gap-2 border-t pt-4;
   }
 
+  .agent-composer__error {
+    @apply mt-3 rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700;
+  }
+
   .agent-shape,
   .agent-team-shape {
     box-sizing: border-box;
@@ -382,6 +411,357 @@
 
   .agent-shape__status {
     @apply rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700;
+  }
+
+  .agent-shape__status[data-status="initializing"] {
+    @apply border-amber-200 bg-amber-50 text-amber-700;
+  }
+
+  .agent-shape__status[data-status="running"] {
+    @apply border-sky-200 bg-sky-50 text-sky-700;
+  }
+
+  .agent-shape__status[data-status="failed"] {
+    @apply border-red-200 bg-red-50 text-red-700;
+  }
+
+  .agent-window__interactive {
+    @apply flex min-h-0 flex-1 flex-col bg-zinc-50/60;
+    pointer-events: all;
+  }
+
+  .agent-config {
+    @apply flex min-h-10 shrink-0 items-center gap-2 overflow-hidden border-b bg-white px-2.5;
+  }
+
+  .agent-config > svg {
+    @apply size-3.5 shrink-0 text-muted-foreground;
+  }
+
+  .agent-config__options {
+    @apply flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1;
+    scrollbar-width: none;
+  }
+
+  .agent-config__options::-webkit-scrollbar {
+    display: none;
+  }
+
+  .agent-config__select {
+    @apply flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground;
+  }
+
+  .agent-config__select select {
+    @apply h-7 max-w-36 rounded-md border bg-background px-2 text-[10px] text-foreground outline-none focus:ring-2 focus:ring-ring;
+  }
+
+  .agent-config__boolean {
+    @apply flex h-7 shrink-0 items-center gap-1.5 rounded-md border bg-background px-2 text-[10px];
+  }
+
+  .agent-config__boolean input {
+    @apply size-3 accent-foreground;
+  }
+
+  .agent-config__error {
+    @apply max-w-28 shrink-0 truncate text-[10px] text-red-600;
+  }
+
+  .conversation-message-list {
+    @apply min-h-0 flex-1 overflow-y-auto px-3 py-3;
+    overscroll-behavior: contain;
+  }
+
+  .conversation-empty {
+    @apply flex h-full min-h-48 flex-col items-center justify-center px-8 text-center;
+  }
+
+  .conversation-empty > svg {
+    @apply mb-3 size-8 rounded-md border bg-white p-1.5 text-zinc-500 shadow-xs;
+  }
+
+  .conversation-empty strong {
+    @apply text-xs font-semibold;
+  }
+
+  .conversation-empty span {
+    @apply mt-1 text-[11px] leading-4 text-muted-foreground;
+  }
+
+  .conversation-run {
+    @apply mb-4 grid gap-2.5;
+  }
+
+  .conversation-message {
+    @apply max-w-[88%] text-[12px] leading-[1.55];
+  }
+
+  .conversation-message p {
+    @apply m-0 whitespace-pre-wrap break-words;
+  }
+
+  .conversation-message--user {
+    @apply ml-auto rounded-lg rounded-br-sm bg-foreground px-3 py-2 text-background;
+  }
+
+  .conversation-message--assistant {
+    @apply mr-auto min-w-16 rounded-lg rounded-bl-sm border bg-white px-3 py-2 text-foreground shadow-xs;
+  }
+
+  .conversation-message__attachments {
+    @apply mt-2 flex flex-wrap gap-1;
+  }
+
+  .conversation-message__attachments span {
+    @apply flex max-w-full items-center gap-1 rounded bg-white/15 px-1.5 py-0.5 text-[9px];
+  }
+
+  .conversation-message__attachments svg {
+    @apply size-2.5 shrink-0;
+  }
+
+  .conversation-message__error,
+  .conversation-message__working,
+  .conversation-message__muted {
+    @apply flex items-center gap-1.5 text-[11px];
+  }
+
+  .conversation-message__error {
+    @apply text-red-600;
+  }
+
+  .conversation-message__muted,
+  .conversation-message__working {
+    @apply text-muted-foreground;
+  }
+
+  .conversation-message__error svg {
+    @apply size-3.5 shrink-0;
+  }
+
+  .conversation-loader {
+    @apply block size-3 shrink-0 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700;
+  }
+
+  .thought-section,
+  .tool-call {
+    @apply rounded-md border bg-white text-[10px] text-muted-foreground;
+  }
+
+  .thought-section summary,
+  .tool-call summary {
+    @apply flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-2 font-medium text-zinc-600;
+  }
+
+  .thought-section summary::-webkit-details-marker,
+  .tool-call summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .thought-section summary svg,
+  .tool-call summary svg {
+    @apply size-3 shrink-0;
+  }
+
+  .thought-section > p {
+    @apply m-0 whitespace-pre-wrap border-t px-2.5 py-2 leading-4;
+  }
+
+  .tool-call-list {
+    @apply grid gap-1;
+  }
+
+  .tool-call summary span {
+    @apply min-w-0 flex-1 truncate;
+  }
+
+  .tool-call summary small {
+    @apply text-[9px] font-normal uppercase text-zinc-400;
+  }
+
+  .tool-call__details {
+    @apply grid gap-2 border-t p-2.5;
+  }
+
+  .tool-call__details strong {
+    @apply text-[9px] uppercase text-zinc-500;
+  }
+
+  .tool-call__details pre {
+    @apply mb-0 mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-zinc-950 p-2 font-mono text-[9px] leading-4 text-zinc-100;
+  }
+
+  .usage-summary {
+    @apply mt-2 flex items-center gap-1 border-t pt-1.5 text-[9px] text-muted-foreground;
+  }
+
+  .usage-summary svg {
+    @apply size-2.5;
+  }
+
+  .permission-request {
+    @apply rounded-md border border-amber-200 bg-amber-50 p-2.5;
+  }
+
+  .permission-request__title {
+    @apply flex items-start gap-2;
+  }
+
+  .permission-request__title > svg {
+    @apply mt-0.5 size-4 shrink-0 text-amber-700;
+  }
+
+  .permission-request__title strong,
+  .permission-request__title span {
+    @apply block;
+  }
+
+  .permission-request__title strong {
+    @apply text-[11px] text-amber-950;
+  }
+
+  .permission-request__title span {
+    @apply mt-0.5 text-[10px] text-amber-800;
+  }
+
+  .permission-request__options {
+    @apply mt-2 flex flex-wrap gap-1.5;
+  }
+
+  .permission-request__options button {
+    @apply flex h-7 items-center gap-1 rounded-md border border-amber-300 bg-white px-2 text-[10px] font-medium text-amber-950 hover:bg-amber-100 disabled:opacity-50;
+  }
+
+  .permission-request__options button[data-reject="true"] {
+    @apply border-red-200 text-red-700 hover:bg-red-50;
+  }
+
+  .permission-request__options svg {
+    @apply size-3;
+  }
+
+  .permission-request__error {
+    @apply mb-0 mt-2 text-[10px] text-red-600;
+  }
+
+  .prompt-composer {
+    @apply shrink-0 border-t bg-white p-2.5;
+  }
+
+  .prompt-composer__attachments {
+    @apply mb-2 flex gap-1 overflow-x-auto;
+  }
+
+  .prompt-composer__attachments > span {
+    @apply flex h-6 max-w-44 shrink-0 items-center gap-1 rounded-md border bg-zinc-50 pl-1.5 text-[9px] text-zinc-600;
+  }
+
+  .prompt-composer__attachments > span > svg {
+    @apply size-3 shrink-0;
+  }
+
+  .prompt-composer__attachments button {
+    @apply grid size-5 shrink-0 place-items-center rounded-sm hover:bg-zinc-200;
+  }
+
+  .prompt-composer__attachments button svg {
+    @apply size-2.5;
+  }
+
+  .prompt-composer__workspace-file {
+    @apply mb-2 flex h-8 overflow-hidden rounded-md border focus-within:ring-2 focus-within:ring-ring;
+  }
+
+  .prompt-composer__workspace-file input {
+    @apply min-w-0 flex-1 px-2 text-[10px] outline-none;
+  }
+
+  .prompt-composer__workspace-file button {
+    @apply border-l bg-zinc-50 px-2 text-[10px] font-medium disabled:opacity-40;
+  }
+
+  .prompt-composer__input {
+    @apply overflow-hidden rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring;
+  }
+
+  .prompt-composer__input textarea {
+    @apply block max-h-28 min-h-12 w-full resize-none bg-transparent px-2.5 pt-2 text-[11px] leading-4 outline-none disabled:opacity-60;
+  }
+
+  .prompt-composer__toolbar {
+    @apply flex h-8 items-center justify-between px-1;
+  }
+
+  .prompt-composer__toolbar > div {
+    @apply flex items-center;
+  }
+
+  .prompt-composer__toolbar button {
+    @apply grid size-7 place-items-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-35;
+  }
+
+  .prompt-composer__toolbar button svg {
+    @apply size-3.5;
+  }
+
+  .prompt-composer__toolbar .prompt-composer__send {
+    @apply bg-foreground text-background hover:bg-zinc-700 hover:text-white;
+  }
+
+  .prompt-composer__toolbar .prompt-composer__stop {
+    @apply bg-red-50 text-red-700 hover:bg-red-100;
+  }
+
+  .prompt-composer__error {
+    @apply mb-0 mt-1.5 text-[10px] text-red-600;
+  }
+
+  .conversation-loading,
+  .conversation-error,
+  .conversation-connection {
+    @apply flex items-center gap-1.5 px-3 py-2 text-[10px];
+  }
+
+  .conversation-loading {
+    @apply text-muted-foreground;
+  }
+
+  .conversation-error {
+    @apply border-t border-red-100 bg-red-50 text-red-700;
+  }
+
+  .conversation-connection {
+    @apply border-t border-amber-100 bg-amber-50 text-amber-700;
+  }
+
+  .conversation-error svg,
+  .conversation-connection svg {
+    @apply size-3.5 shrink-0;
+  }
+
+  .legacy-agent {
+    @apply flex min-h-0 flex-1 flex-col items-center justify-center px-10 text-center;
+    pointer-events: all;
+  }
+
+  .legacy-agent > svg {
+    @apply mb-3 size-8 rounded-md border bg-zinc-50 p-1.5 text-zinc-500;
+  }
+
+  .legacy-agent strong {
+    @apply text-xs;
+  }
+
+  .legacy-agent span {
+    @apply mt-1 text-[10px] leading-4 text-muted-foreground;
+  }
+
+  .legacy-agent button {
+    @apply mt-3 h-8 rounded-md bg-foreground px-3 text-[11px] font-medium text-background disabled:opacity-40;
+  }
+
+  .legacy-agent p {
+    @apply mt-2 text-[10px] text-red-600;
   }
 
   .agent-shape__conversation {
