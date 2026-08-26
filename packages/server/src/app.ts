@@ -17,7 +17,7 @@ export function createApp() {
     }),
   )
   app.use(cors({ origin: environment.corsOrigins }))
-  app.use(express.json({ limit: "1mb" }))
+  app.use(express.json({ limit: "30mb" }))
 
   app.get("/health", (_request, response) => {
     response.json(apiSuccess({ status: "ok" }, getRequestId(response)))

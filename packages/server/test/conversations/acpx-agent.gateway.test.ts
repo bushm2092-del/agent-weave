@@ -1,11 +1,6 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
-import type {
-  AcpRuntime,
-  AcpRuntimeEvent,
-  AcpRuntimeHandle,
-  AcpRuntimeTurnResult,
-} from "acpx/runtime"
+import type { AcpRuntime, AcpRuntimeEvent, AcpRuntimeHandle, AcpRuntimeTurnResult, AcpSessionStore } from "acpx/runtime"
 import { AcpxAgentGateway } from "../../src/features/conversations/gateways/acpx-agent.gateway.js"
 
 function createRuntime(
@@ -16,8 +11,8 @@ function createRuntime(
     sessionKey: "test-session",
     backend: "acpx",
     runtimeSessionName: "test-runtime-session",
+    backendSessionId: "backend-session",
   }
-
   return {
     async ensureSession() {
       return handle
@@ -44,33 +39,70 @@ function createRuntime(
   }
 }
 
-const input = {
+function createStore(): AcpSessionStore {
+  return {
+    async load() {
+      return undefined
+    },
+    async save() {},
+  }
+}
+
+const session = {
   sessionKey: "test-session",
-  requestId: "test-request",
   agent: "pi" as const,
   workspace: "/tmp",
-  message: "Hello",
 }
 
 describe("AcpxAgentGateway", () => {
-  it("collects output text while excluding thought text", async () => {
+  it("streams output and thought events separately", async () => {
     const gateway = new AcpxAgentGateway(
       createRuntime([
         { type: "text_delta", text: "internal", stream: "thought" },
         { type: "text_delta", text: "Hello ", stream: "output" },
         { type: "text_delta", text: "world", stream: "output" },
       ]),
+      createStore(),
     )
+    const received: string[] = []
 
-    const result = await gateway.sendMessage(input)
+    const result = await gateway.run({
+      ...session,
+      conversationId: "conversation",
+      runId: "run",
+      message: "Hello",
+      attachments: [],
+      async emit(event) {
+        received.push(event.type)
+      },
+    })
 
     assert.equal(result.content, "Hello world")
-    assert.equal(result.stopReason, "end_turn")
+    assert.deepEqual(received, ["thought.delta", "assistant.delta", "assistant.delta"])
   })
 
-  it("rejects a completed turn that contains no response text", async () => {
-    const gateway = new AcpxAgentGateway(createRuntime([]))
+  it("rejects a completed turn with no response text", async () => {
+    const gateway = new AcpxAgentGateway(createRuntime([]), createStore())
+    await assert.rejects(
+      gateway.run({
+        ...session,
+        conversationId: "conversation",
+        runId: "run",
+        message: "Hello",
+        attachments: [],
+        async emit() {},
+      }),
+      { code: "AGENT_EMPTY_RESPONSE" },
+    )
+  })
 
-    await assert.rejects(gateway.sendMessage(input), { code: "AGENT_EMPTY_RESPONSE" })
+  it("deletes local session state when the Agent does not support session close", async () => {
+    const runtime = createRuntime([])
+    runtime.close = async () => {
+      throw new Error("session/close unsupported")
+    }
+    const gateway = new AcpxAgentGateway(runtime, createStore())
+
+    await gateway.closeSession(session)
   })
 })

@@ -1,6 +1,8 @@
 import { app } from "./app.js"
 import { environment } from "./config/index.js"
+import { conversationService } from "./features/conversations/index.js"
 
+await conversationService.restoreAll()
 const server = app.listen(environment.port, environment.host, () => {
   console.log(`AgentWeave server listening at http://${environment.host}:${environment.port}`)
 })

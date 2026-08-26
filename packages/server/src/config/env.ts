@@ -8,6 +8,7 @@ const environmentSchema = z.object({
   CORS_ORIGINS: z.string().default("http://localhost:5173,http://localhost:5174"),
   ACPX_STATE_DIR: z.string().min(1).default(".agent-weave/acpx"),
   ACPX_TIMEOUT_MS: z.coerce.number().int().positive().default(300_000),
+  DATABASE_PATH: z.string().min(1).default(".agent-weave/agent-weave.db"),
 })
 
 const parsedEnvironment = environmentSchema.parse(process.env)
@@ -21,4 +22,5 @@ export const environment = {
     .filter(Boolean),
   acpxStateDir: resolve(parsedEnvironment.ACPX_STATE_DIR),
   acpxTimeoutMs: parsedEnvironment.ACPX_TIMEOUT_MS,
+  databasePath: resolve(parsedEnvironment.DATABASE_PATH),
 } as const

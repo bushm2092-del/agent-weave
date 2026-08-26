@@ -22,9 +22,24 @@ Start the API separately:
 pnpm dev:server
 ```
 
-The first conversation endpoint is `POST /api/v1/conversations`. Copy
-`packages/server/.env.example` to `packages/server/.env` when overriding the
-default host, port, CORS origins, acpx state directory, or turn timeout.
+The conversation API is asynchronous and streams persisted events over SSE:
+
+```text
+POST   /api/v1/conversations
+GET    /api/v1/conversations/:conversationId
+DELETE /api/v1/conversations/:conversationId
+GET    /api/v1/conversations/:conversationId/events
+GET    /api/v1/conversations/:conversationId/runs
+POST   /api/v1/conversations/:conversationId/runs
+POST   /api/v1/conversations/:conversationId/runs/:runId/cancel
+POST   /api/v1/conversations/:conversationId/runs/:runId/permissions/:permissionId
+PATCH  /api/v1/conversations/:conversationId/config-options/:configId
+```
+
+ACP session configuration and permission options are forwarded dynamically; the
+server does not maintain static model, reasoning, mode, or permission catalogs.
+Copy `packages/server/.env.example` to `packages/server/.env` when overriding the
+default host, port, CORS origins, SQLite path, acpx state directory, or turn timeout.
 
 Run all checks from the repository root:
 
