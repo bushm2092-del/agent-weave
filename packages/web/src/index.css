@@ -289,6 +289,23 @@
     @apply absolute inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b bg-background px-3 shadow-xs;
   }
 
+  .selection-layout-toolbar-layer {
+    @apply pointer-events-none absolute inset-0 z-30;
+  }
+
+  .selection-layout-toolbar {
+    @apply pointer-events-auto absolute flex h-9 -translate-x-1/2 items-center gap-0.5 rounded-md border bg-popover px-1 text-popover-foreground;
+    box-shadow: var(--shadow-popover);
+  }
+
+  .selection-layout-toolbar__count {
+    @apply whitespace-nowrap px-2 text-xs font-medium;
+  }
+
+  .selection-layout-toolbar__divider {
+    @apply mx-0.5 h-4 w-px bg-border;
+  }
+
   .agent-composer {
     @apply absolute right-3 top-16 z-30 w-[380px] max-w-[calc(100vw-24px)] border bg-background p-4 shadow-lg;
     border-radius: var(--radius);

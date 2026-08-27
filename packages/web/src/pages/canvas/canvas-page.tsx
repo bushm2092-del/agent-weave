@@ -6,6 +6,7 @@ import "tldraw/tldraw.css"
 
 import { Button } from "@/components/ui/button"
 import { AgentComposer, type AgentDraft } from "@/features/canvas/agent-composer"
+import { SelectionLayoutToolbar } from "@/features/canvas/layout"
 import { AGENT_RUNNERS } from "@/features/canvas/agent-options"
 import { AgentShapeUtil } from "@/features/canvas/shapes/agent"
 import { AgentTeamShapeUtil } from "@/features/canvas/shapes/agent-team"
@@ -79,8 +80,9 @@ export function CanvasPage() {
 
   return (
     <main className="relative h-dvh w-dvw overflow-hidden bg-background">
-      <div className="absolute inset-0 pt-14">
+      <div className="absolute inset-x-0 bottom-0 top-14">
         <Tldraw onMount={setEditor} persistenceKey={`agent-weave-canvas-${canvasId}`} shapeUtils={shapeUtils} />
+        {editor && <SelectionLayoutToolbar editor={editor} />}
       </div>
 
       <header className="canvas-header">
