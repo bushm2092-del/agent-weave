@@ -12,46 +12,68 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --background: oklch(0.985 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --mio-brand: #fd7e14;
+  --mio-brand-hover: rgb(253 126 20 / 80%);
+  --mio-brand-soft: rgb(253 126 20 / 20%);
+  --mio-brand-gradient: linear-gradient(110deg, #ff6a00, #ffd21c);
+  --mio-canvas: #fff;
+  --mio-surface: #fafafa;
+  --mio-navigation: #f5f5f5;
+  --mio-sunken: #e5e5e7;
+  --mio-inverse: #1a1a1a;
+  --mio-text-primary: rgb(0 0 0 / 87.5%);
+  --mio-text-secondary: rgb(0 0 0 / 65%);
+  --mio-text-auxiliary: rgb(0 0 0 / 48.6%);
+  --mio-text-tertiary: #999;
+  --mio-text-disabled: rgb(0 0 0 / 30%);
+  --mio-border-subtle: rgb(0 0 0 / 6%);
+  --mio-border-default: rgb(0 0 0 / 8%);
+  --mio-border-control: rgb(0 0 0 / 16%);
+  --mio-success: #2ea968;
+  --mio-warning: #fa9d05;
+  --mio-danger: #dc3926;
+  --mio-info: #3d72ff;
+  --mio-thinking: #a6d44b;
+  --background: var(--mio-surface);
+  --foreground: var(--mio-text-primary);
+  --card: var(--mio-canvas);
+  --card-foreground: var(--mio-text-primary);
+  --popover: var(--mio-canvas);
+  --popover-foreground: var(--mio-text-primary);
+  --primary: var(--mio-brand);
+  --primary-foreground: #fff;
+  --secondary: var(--mio-navigation);
+  --secondary-foreground: var(--mio-text-primary);
+  --muted: var(--mio-navigation);
+  --muted-foreground: var(--mio-text-secondary);
+  --accent: var(--mio-brand-soft);
+  --accent-foreground: #a84600;
+  --destructive: var(--mio-danger);
+  --border: var(--mio-border-default);
+  --input: var(--mio-border-control);
+  --ring: var(--mio-brand);
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: var(--mio-inverse);
+  --foreground: rgb(255 255 255 / 88%);
+  --card: #242424;
+  --card-foreground: rgb(255 255 255 / 88%);
+  --popover: #242424;
+  --popover-foreground: rgb(255 255 255 / 88%);
+  --primary: var(--mio-brand);
+  --primary-foreground: #fff;
+  --secondary: #303030;
+  --secondary-foreground: rgb(255 255 255 / 88%);
+  --muted: #303030;
+  --muted-foreground: rgb(255 255 255 / 65%);
+  --accent: rgb(253 126 20 / 24%);
+  --accent-foreground: #ffb06f;
+  --destructive: #ef6455;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 16%);
+  --ring: var(--mio-brand);
 }
 
 @theme inline {
@@ -74,6 +96,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--mio-success);
+  --color-warning: var(--mio-warning);
+  --color-info: var(--mio-info);
+  --color-thinking: var(--mio-thinking);
   --radius-sm: calc(var(--radius) * 0.75);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) * 1.25);
@@ -91,7 +117,7 @@
 
 @layer components {
   .home-page {
-    @apply min-h-dvh bg-zinc-50 text-foreground;
+    @apply min-h-dvh bg-background text-foreground;
   }
 
   .home-header {
@@ -1501,22 +1527,6 @@ body.agent-weave-clean-ui .tlui-main-toolbar {
 
 /* Miora-inspired color token debugger. Scoped to keep production UI unchanged. */
 .token-debugger {
-  --mio-brand: #fd7e14;
-  --mio-brand-hover: rgb(253 126 20 / 80%);
-  --mio-brand-soft: rgb(253 126 20 / 20%);
-  --mio-canvas: #fff;
-  --mio-surface: #fafafa;
-  --mio-navigation: #f5f5f5;
-  --mio-sunken: #e5e5e7;
-  --mio-inverse: #1a1a1a;
-  --mio-text-primary: rgb(0 0 0 / 87.5%);
-  --mio-text-secondary: rgb(0 0 0 / 65%);
-  --mio-text-auxiliary: rgb(0 0 0 / 48.6%);
-  --mio-text-tertiary: #999;
-  --mio-text-disabled: rgb(0 0 0 / 30%);
-  --mio-border-subtle: rgb(0 0 0 / 6%);
-  --mio-border-default: rgb(0 0 0 / 8%);
-  --mio-border-control: rgb(0 0 0 / 16%);
   min-height: 100dvh;
   background: var(--mio-surface);
   color: var(--mio-text-primary);
