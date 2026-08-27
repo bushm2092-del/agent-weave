@@ -306,6 +306,45 @@
     @apply mx-0.5 h-4 w-px bg-border;
   }
 
+  .selection-layout-divider {
+    @apply pointer-events-auto absolute z-10 touch-none;
+  }
+
+  .selection-layout-divider::after {
+    @apply absolute bg-primary/70 content-[''];
+  }
+
+  .selection-layout-divider[data-orientation='vertical'] {
+    @apply w-3 -translate-x-1/2 cursor-col-resize;
+  }
+
+  .selection-layout-divider[data-orientation='vertical']::after {
+    @apply inset-y-0 left-1/2 w-px -translate-x-1/2;
+  }
+
+  .selection-layout-divider[data-orientation='horizontal'] {
+    @apply h-3 -translate-y-1/2 cursor-row-resize;
+  }
+
+  .selection-layout-divider[data-orientation='horizontal']::after {
+    @apply inset-x-0 top-1/2 h-px -translate-y-1/2;
+  }
+
+  .selection-layout-divider:hover::after,
+  .selection-layout-divider:active::after {
+    @apply bg-primary;
+  }
+
+  .selection-layout-divider[data-orientation='vertical']:hover::after,
+  .selection-layout-divider[data-orientation='vertical']:active::after {
+    @apply w-0.5;
+  }
+
+  .selection-layout-divider[data-orientation='horizontal']:hover::after,
+  .selection-layout-divider[data-orientation='horizontal']:active::after {
+    @apply h-0.5;
+  }
+
   .agent-composer {
     @apply absolute right-3 top-16 z-30 w-[380px] max-w-[calc(100vw-24px)] border bg-background p-4 shadow-lg;
     border-radius: var(--radius);

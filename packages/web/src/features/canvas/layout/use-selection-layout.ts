@@ -1,7 +1,7 @@
 import { useCallback } from "react"
 import { type Editor, useValue } from "tldraw"
 
-import { applyAgentLayout, getSelectedAgentShapes } from "./selection-layout"
+import { applyAgentLayout, getSelectedAgentShapes, getSelectedAgentSplit } from "./selection-layout"
 import type { AgentLayoutPreset } from "./layout.types"
 
 const TOOLBAR_HALF_WIDTH = 124
@@ -33,7 +33,24 @@ export function useSelectionLayout(editor: Editor) {
           : bottomCenter.y + TOOLBAR_GAP
       const y = Math.min(Math.max(preferredY, 8), viewport.h - TOOLBAR_HEIGHT - 8)
 
-      return { count: shapes.length, x, y }
+      const pageSplit = getSelectedAgentSplit(editor)
+      const split = pageSplit
+        ? (() => {
+            const start = editor.pageToViewport({ x: pageSplit.x, y: pageSplit.y })
+            const end = editor.pageToViewport({
+              x: pageSplit.x + (pageSplit.orientation === "horizontal" ? pageSplit.length : 0),
+              y: pageSplit.y + (pageSplit.orientation === "vertical" ? pageSplit.length : 0),
+            })
+            return {
+              ...pageSplit,
+              screenX: start.x,
+              screenY: start.y,
+              screenLength: pageSplit.orientation === "vertical" ? end.y - start.y : end.x - start.x,
+            }
+          })()
+        : null
+
+      return { count: shapes.length, split, x, y }
     },
     [editor],
   )

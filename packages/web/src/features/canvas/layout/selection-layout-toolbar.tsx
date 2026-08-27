@@ -5,6 +5,7 @@ import type { Editor } from "tldraw"
 import { Button } from "@/components/ui/button"
 
 import type { AgentLayoutPreset } from "./layout.types"
+import { SelectionLayoutDivider } from "./selection-layout-divider"
 import { useSelectionLayout } from "./use-selection-layout"
 
 const actions: Array<{
@@ -29,6 +30,7 @@ export function SelectionLayoutToolbar({ editor }: { editor: Editor }) {
 
   return (
     <div className="selection-layout-toolbar-layer" aria-hidden={false}>
+      {selection.split && <SelectionLayoutDivider editor={editor} split={selection.split} />}
       <div
         aria-label={`Arrange ${selection.count} selected agents`}
         className="selection-layout-toolbar"

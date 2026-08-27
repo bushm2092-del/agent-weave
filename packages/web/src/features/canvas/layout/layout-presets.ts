@@ -1,6 +1,6 @@
 import type { AgentLayoutPreset, LayoutItem, LayoutOptions, LayoutPlacement } from "./layout.types"
 
-export const DEFAULT_AGENT_LAYOUT_GAP = 48
+export const DEFAULT_AGENT_LAYOUT_GAP = 0
 
 const byReadingOrder = (a: LayoutItem, b: LayoutItem) => a.y - b.y || a.x - b.x
 const byHorizontalPosition = (a: LayoutItem, b: LayoutItem) => a.x - b.x || a.y - b.y
@@ -16,40 +16,29 @@ function getOrigin(items: LayoutItem[]) {
 function calculateGridLayout(items: LayoutItem[], gap: number): LayoutPlacement[] {
   const ordered = [...items].sort(byReadingOrder)
   const columns = ordered.length <= 3 ? ordered.length : Math.ceil(Math.sqrt(ordered.length))
-  const rows = Math.ceil(ordered.length / columns)
-  const columnWidths = Array.from({ length: columns }, () => 0)
-  const rowHeights = Array.from({ length: rows }, () => 0)
-
-  ordered.forEach((item, index) => {
-    const column = index % columns
-    const row = Math.floor(index / columns)
-    columnWidths[column] = Math.max(columnWidths[column], item.w)
-    rowHeights[row] = Math.max(rowHeights[row], item.h)
-  })
-
   const origin = getOrigin(ordered)
-  const columnOffsets = columnWidths.map((_, column) =>
-    columnWidths.slice(0, column).reduce((total, width) => total + width, 0) + column * gap,
-  )
-  const rowOffsets = rowHeights.map((_, row) =>
-    rowHeights.slice(0, row).reduce((total, height) => total + height, 0) + row * gap,
-  )
+  const w = Math.max(...ordered.map((item) => item.w))
+  const h = Math.max(...ordered.map((item) => item.h))
 
   return ordered.map((item, index) => ({
     id: item.id,
-    x: origin.x + columnOffsets[index % columns],
-    y: origin.y + rowOffsets[Math.floor(index / columns)],
+    x: origin.x + (index % columns) * (w + gap),
+    y: origin.y + Math.floor(index / columns) * (h + gap),
+    w,
+    h,
   }))
 }
 
 function calculateHorizontalLayout(items: LayoutItem[], gap: number): LayoutPlacement[] {
   const ordered = [...items].sort(byHorizontalPosition)
   const origin = getOrigin(ordered)
+  const w = Math.max(...ordered.map((item) => item.w))
+  const h = Math.max(...ordered.map((item) => item.h))
   let x = origin.x
 
   return ordered.map((item) => {
-    const placement = { id: item.id, x, y: origin.y }
-    x += item.w + gap
+    const placement = { id: item.id, x, y: origin.y, w, h }
+    x += w + gap
     return placement
   })
 }
@@ -57,11 +46,13 @@ function calculateHorizontalLayout(items: LayoutItem[], gap: number): LayoutPlac
 function calculateVerticalLayout(items: LayoutItem[], gap: number): LayoutPlacement[] {
   const ordered = [...items].sort(byVerticalPosition)
   const origin = getOrigin(ordered)
+  const w = Math.max(...ordered.map((item) => item.w))
+  const h = Math.max(...ordered.map((item) => item.h))
   let y = origin.y
 
   return ordered.map((item) => {
-    const placement = { id: item.id, x: origin.x, y }
-    y += item.h + gap
+    const placement = { id: item.id, x: origin.x, y, w, h }
+    y += h + gap
     return placement
   })
 }
@@ -71,14 +62,17 @@ function calculatePrimaryLayout(items: LayoutItem[], gap: number, primaryId?: La
   const primary = ordered.find((item) => item.id === primaryId) ?? ordered.at(-1)!
   const secondary = ordered.filter((item) => item.id !== primary.id)
   const origin = getOrigin(ordered)
-  const secondaryX = origin.x + primary.w + gap
+  const w = Math.max(...ordered.map((item) => item.w))
+  const h = Math.max(...ordered.map((item) => item.h))
+  const primaryHeight = secondary.length * h + Math.max(0, secondary.length - 1) * gap
+  const secondaryX = origin.x + w + gap
   let secondaryY = origin.y
 
   return [
-    { id: primary.id, x: origin.x, y: origin.y },
+    { id: primary.id, x: origin.x, y: origin.y, w, h: primaryHeight },
     ...secondary.map((item) => {
-      const placement = { id: item.id, x: secondaryX, y: secondaryY }
-      secondaryY += item.h + gap
+      const placement = { id: item.id, x: secondaryX, y: secondaryY, w, h }
+      secondaryY += h + gap
       return placement
     }),
   ]
@@ -89,7 +83,7 @@ export function calculateAgentLayout(
   preset: AgentLayoutPreset,
   options: LayoutOptions = {},
 ): LayoutPlacement[] {
-  if (items.length < 2) return items.map(({ id, x, y }) => ({ id, x, y }))
+  if (items.length < 2) return items.map(({ id, x, y, w, h }) => ({ id, x, y, w, h }))
 
   const gap = options.gap ?? DEFAULT_AGENT_LAYOUT_GAP
   switch (preset) {
