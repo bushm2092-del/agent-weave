@@ -2,6 +2,7 @@ import { isAcpRuntimeError } from "acpx/runtime"
 import { ZodError } from "zod"
 import { AgentGatewayError } from "../../features/conversations/gateways/agent.gateway.js"
 import { ConversationError } from "../../features/conversations/conversation.errors.js"
+import { FileApiError } from "../../features/files/file.errors.js"
 import { HttpError } from "./http-error.js"
 
 export type MappedHttpError = {
@@ -31,6 +32,10 @@ export function mapHttpError(error: unknown): MappedHttpError {
   }
 
   if (error instanceof ConversationError) {
+    return { status: error.status, code: error.code, message: error.message }
+  }
+
+  if (error instanceof FileApiError) {
     return { status: error.status, code: error.code, message: error.message }
   }
 

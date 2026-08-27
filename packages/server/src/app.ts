@@ -4,6 +4,7 @@ import express from "express"
 import { pinoHttp } from "pino-http"
 import { environment } from "./config/index.js"
 import { conversationRouter } from "./features/conversations/index.js"
+import { fileRouter } from "./features/files/index.js"
 import { errorHandler, getRequestId, notFoundHandler, requestContext } from "./http/index.js"
 
 export function createApp() {
@@ -23,6 +24,7 @@ export function createApp() {
     response.json(apiSuccess({ status: "ok" }, getRequestId(response)))
   })
   app.use("/api/v1/conversations", conversationRouter)
+  app.use("/api/v1/files", fileRouter)
 
   app.use(notFoundHandler)
   app.use(errorHandler)

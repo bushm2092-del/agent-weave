@@ -36,6 +36,17 @@ POST   /api/v1/conversations/:conversationId/runs/:runId/permissions/:permission
 PATCH  /api/v1/conversations/:conversationId/config-options/:configId
 ```
 
+The read-only file API accepts absolute local paths:
+
+```text
+GET    /api/v1/files/list?path=/absolute/directory
+GET    /api/v1/files/read?path=/absolute/file
+GET    /api/v1/files/raw?path=/absolute/image
+```
+
+Directory reads return one level at a time, text reads accept UTF-8 files up to
+2 MiB, and raw reads stream supported images up to 20 MiB.
+
 ACP session configuration and permission options are forwarded dynamically; the
 server does not maintain static model, reasoning, mode, or permission catalogs.
 Copy `packages/server/.env.example` to `packages/server/.env` when overriding the
