@@ -105,7 +105,10 @@ export class AgentShapeUtil extends BaseBoxShapeUtil<AgentShape> {
 
 function AgentCard({ editor, shape }: { editor: Editor; shape: AgentShape }) {
   const runner = AGENT_RUNNERS[shape.props.runner]
-  const markHandled = (event: PointerEvent<HTMLElement>) => editor.markEventAsHandled(event)
+  const markHandled = (event: PointerEvent<HTMLElement>) => {
+    if (!editor.getSelectedShapeIds().includes(shape.id)) editor.select(shape.id)
+    editor.markEventAsHandled(event)
+  }
 
   return (
     <HTMLContainer className="agent-shape" style={{ width: shape.props.w, height: shape.props.h }}>

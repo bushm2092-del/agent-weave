@@ -289,6 +289,109 @@
     @apply absolute inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b bg-background px-3 shadow-xs;
   }
 
+  .canvas-stage {
+    @apply absolute inset-x-0 bottom-0 top-14;
+    transition: right 160ms ease;
+  }
+
+  .canvas-stage[data-file-sidebar-open="true"] {
+    right: 300px;
+  }
+
+  .file-sidebar {
+    @apply absolute bottom-0 right-0 top-14 z-20 flex w-[300px] max-w-full flex-col border-l bg-background shadow-sm;
+  }
+
+  .file-sidebar__header {
+    @apply flex h-14 shrink-0 items-center gap-2.5 border-b px-3;
+  }
+
+  .file-sidebar__header > svg {
+    @apply size-4 shrink-0 text-muted-foreground;
+  }
+
+  .file-sidebar__header > div {
+    @apply min-w-0;
+  }
+
+  .file-sidebar__header strong,
+  .file-sidebar__header span {
+    @apply block truncate;
+  }
+
+  .file-sidebar__header strong {
+    @apply text-xs font-semibold;
+  }
+
+  .file-sidebar__header span {
+    @apply mt-0.5 text-[11px] text-muted-foreground;
+  }
+
+  .file-sidebar__tree {
+    @apply min-h-0 flex-1 overflow-auto py-1.5;
+  }
+
+  .file-tree {
+    @apply min-w-max;
+  }
+
+  .file-tree__row {
+    @apply flex h-7 w-full min-w-[298px] items-center gap-1.5 border-0 bg-transparent pr-2 text-left text-xs text-foreground outline-none hover:bg-muted focus-visible:bg-muted;
+  }
+
+  .file-tree__row[data-selected="true"] {
+    @apply bg-accent font-medium text-accent-foreground;
+  }
+
+  .file-tree__row > svg:not(.file-tree__chevron) {
+    @apply size-3.5 shrink-0 text-muted-foreground;
+  }
+
+  .file-tree__row > span {
+    @apply truncate;
+  }
+
+  .file-tree__chevron {
+    @apply size-3 shrink-0 text-muted-foreground opacity-0 transition-transform;
+  }
+
+  .file-tree__chevron[data-visible="true"] {
+    @apply opacity-100;
+  }
+
+  .file-tree__chevron[data-expanded="true"] {
+    @apply rotate-90;
+  }
+
+  .file-tree__status {
+    @apply flex min-h-24 items-center justify-center gap-2 px-4 text-center text-xs text-muted-foreground;
+  }
+
+  .file-tree__status > svg,
+  .file-tree__status button svg,
+  .file-tree__nested-status svg,
+  .file-tree__nested-error svg {
+    @apply size-3.5;
+  }
+
+  .file-tree__status--error {
+    @apply flex-col text-destructive;
+  }
+
+  .file-tree__status button {
+    @apply grid size-7 place-items-center rounded-sm border bg-background text-foreground hover:bg-muted;
+  }
+
+  .file-tree__nested-status,
+  .file-tree__nested-empty,
+  .file-tree__nested-error {
+    @apply flex h-7 items-center gap-1.5 text-[11px] text-muted-foreground;
+  }
+
+  .file-tree__nested-error {
+    @apply w-full border-0 bg-transparent text-left text-destructive hover:bg-muted;
+  }
+
   .selection-layout-toolbar-layer {
     @apply pointer-events-none absolute inset-0 z-30;
   }
@@ -919,6 +1022,14 @@
 
   .canvas-header button:not([aria-label]) svg {
     margin: 0;
+  }
+
+  .canvas-stage[data-file-sidebar-open="true"] {
+    right: 0;
+  }
+
+  .file-sidebar {
+    width: min(300px, calc(100vw - 40px));
   }
 }
 

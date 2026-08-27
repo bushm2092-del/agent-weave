@@ -11,6 +11,7 @@ import { AGENT_RUNNERS } from "@/features/canvas/agent-options"
 import { AgentShapeUtil } from "@/features/canvas/shapes/agent"
 import { AgentTeamShapeUtil } from "@/features/canvas/shapes/agent-team"
 import { conversationApi, conversationController } from "@/features/conversations"
+import { FileSidebar, useSingleSelectedAgent } from "@/features/files"
 import { getWorkspace } from "@/pages/home/workspaces"
 import { useWorkspaceStore } from "@/stores/workspace-store"
 
@@ -20,6 +21,7 @@ export function CanvasPage() {
   const { canvasId = "untitled" } = useParams()
   const [editor, setEditor] = useState<Editor | null>(null)
   const [composerOpen, setComposerOpen] = useState(false)
+  const selectedAgent = useSingleSelectedAgent(editor)
   const fallbackName = getWorkspace(canvasId)?.name ?? "Untitled canvas"
   const canvasName = useWorkspaceStore((state) => state.canvasNames[canvasId] ?? fallbackName)
   const renameCanvas = useWorkspaceStore((state) => state.renameCanvas)
@@ -80,10 +82,17 @@ export function CanvasPage() {
 
   return (
     <main className="relative h-dvh w-dvw overflow-hidden bg-background">
-      <div className="absolute inset-x-0 bottom-0 top-14">
+      <div className="canvas-stage" data-file-sidebar-open={Boolean(selectedAgent)}>
         <Tldraw onMount={setEditor} persistenceKey={`agent-weave-canvas-${canvasId}`} shapeUtils={shapeUtils} />
         {editor && <SelectionLayoutToolbar editor={editor} />}
       </div>
+
+      {selectedAgent && (
+        <FileSidebar
+          key={`${selectedAgent.id}:${selectedAgent.props.workspace}`}
+          workspace={selectedAgent.props.workspace}
+        />
+      )}
 
       <header className="canvas-header">
         <div className="flex min-w-0 items-center gap-2">
