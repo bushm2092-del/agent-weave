@@ -1,4 +1,5 @@
 import type {
+  AgentProvider,
   Conversation,
   ConversationEvent,
   CreateConversationRequest,
@@ -6,6 +7,22 @@ import type {
   Run,
   SetConfigOptionRequest,
 } from "@agent-weave/contracts"
+
+export type ManagedConversationInput = {
+  agent: AgentProvider
+  workspace: string
+  owner: { kind: "team_member"; id: string }
+  sessionContext: {
+    model?: string
+    systemPrompt?: string
+    mcpServers?: Array<{
+      name: string
+      command: string
+      args: string[]
+      env: Record<string, string>
+    }>
+  }
+}
 
 export type ConversationServicePort = {
   create(input: CreateConversationRequest): Promise<Conversation>

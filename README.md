@@ -47,6 +47,34 @@ GET    /api/v1/files/raw?path=/absolute/image
 Directory reads return one level at a time, text reads accept UTF-8 files up to
 2 MiB, and raw reads stream supported images up to 20 MiB.
 
+Agent Teams are durable backend entities projected onto the canvas. Each member
+owns an isolated managed Conversation, while Team runs, mailbox intents, tasks,
+spawn approvals, and replayable events are coordinated by the Team service:
+
+```text
+POST   /api/v1/teams
+GET    /api/v1/teams?canvasId=:canvasId
+GET    /api/v1/teams/:teamId
+PATCH  /api/v1/teams/:teamId
+DELETE /api/v1/teams/:teamId
+POST   /api/v1/teams/:teamId/messages
+POST   /api/v1/teams/:teamId/members
+DELETE /api/v1/teams/:teamId/members/:slotId
+POST   /api/v1/teams/:teamId/members/:slotId/messages
+GET    /api/v1/teams/:teamId/runs
+POST   /api/v1/teams/:teamId/runs/:runId/cancel
+GET    /api/v1/teams/:teamId/events?after=:sequence
+```
+
+Agents collaborate through an authenticated stdio MCP bridge. A leader's
+`team_spawn_agent` call creates a pending request; only an explicit approval in
+the Team Inspector provisions the new member runtime. Host-side Team mutations
+use a per-Team control capability returned at creation; only its hash is stored
+by the server, and it is never passed to member runtimes.
+
+The detailed product flow and implementation boundaries are documented in
+`docs/agent-team-product-interaction.md` and `docs/agent-team-code-architecture.md`.
+
 ACP session configuration and permission options are forwarded dynamically; the
 server does not maintain static model, reasoning, mode, or permission catalogs.
 Copy `packages/server/.env.example` to `packages/server/.env` when overriding the
@@ -57,5 +85,6 @@ Run all checks from the repository root:
 ```bash
 pnpm typecheck
 pnpm lint
+pnpm test
 pnpm build
 ```

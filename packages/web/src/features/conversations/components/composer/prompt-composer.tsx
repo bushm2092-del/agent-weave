@@ -4,16 +4,19 @@ import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
 
 import { conversationApi } from "@/features/conversations/api"
 import { conversationStore } from "@/features/conversations/store"
+import { teamApi } from "@/features/teams"
 import { ApiClientError } from "@/lib/api"
 
 export function PromptComposer({
   conversationId,
   activeRun,
   disabled,
+  teamTarget,
 }: {
   conversationId: string
   activeRun?: Run
   disabled: boolean
+  teamTarget?: { teamId: string; slotId: string }
 }) {
   const [message, setMessage] = useState("")
   const [attachments, setAttachments] = useState<MessageAttachment[]>([])
@@ -25,12 +28,20 @@ export function PromptComposer({
 
   const send = async () => {
     const content = message.trim()
-    if (!content || disabled || activeRun || submitting) return
+    if (!content || disabled || (!teamTarget && activeRun) || submitting) return
     setSubmitting(true)
     setError(undefined)
     try {
-      const run = await conversationApi.createRun(conversationId, { message: content, attachments })
-      conversationStore.getState().upsertRun(run)
+      if (teamTarget) {
+        await teamApi.sendMemberMessage(teamTarget.teamId, teamTarget.slotId, {
+          message: content,
+          attachments,
+          clientMessageId: crypto.randomUUID(),
+        })
+      } else {
+        const run = await conversationApi.createRun(conversationId, { message: content, attachments })
+        conversationStore.getState().upsertRun(run)
+      }
       setMessage("")
       setAttachments([])
     } catch (requestError) {
@@ -122,7 +133,13 @@ export function PromptComposer({
         <textarea
           aria-label="Message agent"
           disabled={disabled}
-          placeholder={disabled ? "Waiting for agent..." : "Ask this agent anything..."}
+          placeholder={
+            disabled
+              ? "Waiting for agent..."
+              : teamTarget
+                ? "Message this team member..."
+                : "Ask this agent anything..."
+          }
           rows={2}
           value={message}
           onChange={(event) => setMessage(event.target.value)}
@@ -142,11 +159,12 @@ export function PromptComposer({
             </button>
             <input accept="image/*" hidden ref={imageInput} type="file" onChange={(event) => void addImage(event)} />
           </div>
-          {activeRun ? (
+          {activeRun && (
             <button className="prompt-composer__stop" aria-label="Stop run" type="button" onClick={() => void stop()}>
               <Square />
             </button>
-          ) : (
+          )}
+          {(!activeRun || teamTarget) && (
             <button
               className="prompt-composer__send"
               aria-label="Send message"

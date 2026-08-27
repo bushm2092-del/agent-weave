@@ -11,7 +11,30 @@ import type {
   TokenUsage,
 } from "@agent-weave/contracts"
 
-export type StoredConversation = Conversation & { sessionKey: string }
+export type AgentMcpServerConfig = {
+  name: string
+  command: string
+  args: string[]
+  env: Record<string, string>
+}
+
+export type ConversationSessionContext = {
+  model?: string
+  systemPrompt?: string
+  mcpServers?: AgentMcpServerConfig[]
+}
+
+export type ManagedConversationOwner = {
+  kind: "team_member"
+  id: string
+}
+
+export type StoredConversation = Conversation & {
+  sessionKey: string
+  ownerKind?: "team_member"
+  ownerId?: string
+  sessionContext: ConversationSessionContext
+}
 
 export type StoredRun = Run
 
@@ -31,6 +54,8 @@ export type CreateConversationRecord = {
   agent: AgentProvider
   workspace: string
   sessionKey: string
+  owner?: ManagedConversationOwner
+  sessionContext?: ConversationSessionContext
   now: string
 }
 
@@ -61,6 +86,7 @@ export interface ConversationRepository {
       status?: Conversation["status"]
       sessionState?: Conversation["sessionState"]
       configOptions?: AgentConfigOption[]
+      sessionContext?: ConversationSessionContext
       error?: string | null
       updatedAt: string
     },
@@ -89,4 +115,5 @@ export interface ConversationRepository {
   createPermissionRequest(request: StoredPermissionRequest): void
   getPermissionRequest(id: string): StoredPermissionRequest | undefined
   resolvePermissionRequest(id: string, optionId: string, now: string): void
+  cancelPendingPermissions(runId: string, now: string): StoredPermissionRequest[]
 }

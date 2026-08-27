@@ -1,27 +1,23 @@
 export const AGENT_RUNNERS = {
   "claude-code": {
     label: "Claude Code",
-    shortLabel: "CC",
     provider: "claude",
-    accent: "#d97757",
+    iconSrc: "/agent-icons/claude-code.svg",
   },
   codex: {
     label: "Codex",
-    shortLabel: "CX",
     provider: "codex",
-    accent: "#198754",
+    iconSrc: "/agent-icons/codex.svg",
   },
   pi: {
     label: "Pi",
-    shortLabel: "PI",
     provider: "pi",
-    accent: "#2563eb",
+    iconSrc: "/agent-icons/pi.svg",
   },
   opencode: {
     label: "OpenCode",
-    shortLabel: "OC",
     provider: "opencode",
-    accent: "#7c3aed",
+    iconSrc: "/agent-icons/opencode.svg",
   },
 } as const
 

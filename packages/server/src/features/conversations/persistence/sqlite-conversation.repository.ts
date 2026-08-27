@@ -1,5 +1,3 @@
-import { mkdirSync } from "node:fs"
-import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import type {
   AgentConfigOption,
@@ -11,10 +9,11 @@ import type {
   RunStatus,
   TokenUsage,
 } from "@agent-weave/contracts"
-import { environment } from "../../../config/index.js"
+import { appDatabase } from "../../../database/index.js"
 import { ConversationError } from "../conversation.errors.js"
 import type {
   AppendEventInput,
+  ConversationSessionContext,
   ConversationRepository,
   CreateConversationRecord,
   CreateRunRecord,
@@ -26,7 +25,7 @@ import type {
 type SqliteRow = Record<string, unknown>
 
 export class SqliteConversationRepository implements ConversationRepository {
-  constructor(private readonly database: DatabaseSync = createDatabase(environment.databasePath)) {
+  constructor(private readonly database: DatabaseSync = appDatabase) {
     this.migrate()
   }
 
@@ -36,11 +35,21 @@ export class SqliteConversationRepository implements ConversationRepository {
         `
       INSERT INTO conversations (
         id, agent, workspace, session_key, status, session_state,
-        config_options, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, 'initializing', 'pending', '[]', ?, ?)
+        config_options, owner_kind, owner_id, session_context, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, 'initializing', 'pending', '[]', ?, ?, ?, ?, ?)
     `,
       )
-      .run(input.id, input.agent, input.workspace, input.sessionKey, input.now, input.now)
+      .run(
+        input.id,
+        input.agent,
+        input.workspace,
+        input.sessionKey,
+        input.owner?.kind ?? null,
+        input.owner?.id ?? null,
+        JSON.stringify(input.sessionContext ?? {}),
+        input.now,
+        input.now,
+      )
     return this.requireConversation(input.id)
   }
 
@@ -58,6 +67,7 @@ export class SqliteConversationRepository implements ConversationRepository {
       status?: Conversation["status"]
       sessionState?: Conversation["sessionState"]
       configOptions?: AgentConfigOption[]
+      sessionContext?: ConversationSessionContext
       error?: string | null
       updatedAt: string
     },
@@ -67,7 +77,7 @@ export class SqliteConversationRepository implements ConversationRepository {
       .prepare(
         `
       UPDATE conversations
-      SET status = ?, session_state = ?, config_options = ?, error = ?, updated_at = ?
+      SET status = ?, session_state = ?, config_options = ?, session_context = ?, error = ?, updated_at = ?
       WHERE id = ?
     `,
       )
@@ -75,6 +85,7 @@ export class SqliteConversationRepository implements ConversationRepository {
         patch.status ?? current.status,
         patch.sessionState ?? current.sessionState,
         JSON.stringify(patch.configOptions ?? current.configOptions),
+        JSON.stringify(patch.sessionContext ?? current.sessionContext),
         patch.error === undefined ? (current.error ?? null) : patch.error,
         patch.updatedAt,
         id,
@@ -234,6 +245,22 @@ export class SqliteConversationRepository implements ConversationRepository {
       .run(optionId, now, id)
   }
 
+  cancelPendingPermissions(runId: string, now: string): StoredPermissionRequest[] {
+    const pending = this.database
+      .prepare("SELECT * FROM permission_requests WHERE run_id = ? AND status = 'pending' ORDER BY created_at")
+      .all(runId)
+      .flatMap((row) => {
+        const permission = mapPermission(row)
+        return permission ? [permission] : []
+      })
+    this.database
+      .prepare(
+        "UPDATE permission_requests SET status = 'cancelled', resolved_at = ? WHERE run_id = ? AND status = 'pending'",
+      )
+      .run(now, runId)
+    return pending
+  }
+
   private requireConversation(id: string): StoredConversation {
     const conversation = this.getConversation(id)
     if (!conversation) {
@@ -310,12 +337,14 @@ export class SqliteConversationRepository implements ConversationRepository {
       CREATE INDEX IF NOT EXISTS idx_events_conversation_sequence
         ON conversation_events(conversation_id, sequence);
     `)
+    ensureColumn(this.database, "conversations", "owner_kind", "TEXT")
+    ensureColumn(this.database, "conversations", "owner_id", "TEXT")
+    ensureColumn(this.database, "conversations", "session_context", "TEXT NOT NULL DEFAULT '{}'")
+    this.database.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_conversations_owner
+        ON conversations(owner_kind, owner_id) WHERE owner_kind IS NOT NULL;
+    `)
   }
-}
-
-function createDatabase(path: string): DatabaseSync {
-  mkdirSync(dirname(path), { recursive: true })
-  return new DatabaseSync(path)
 }
 
 function mapConversation(row: SqliteRow | undefined): StoredConversation | undefined
@@ -327,6 +356,9 @@ function mapConversation(row: SqliteRow | undefined): StoredConversation | undef
     agent: String(row.agent) as StoredConversation["agent"],
     workspace: String(row.workspace),
     sessionKey: String(row.session_key),
+    ...(row.owner_kind ? { ownerKind: String(row.owner_kind) as "team_member" } : {}),
+    ...(row.owner_id ? { ownerId: String(row.owner_id) } : {}),
+    sessionContext: parseJson(row.session_context, {}),
     status: String(row.status) as StoredConversation["status"],
     sessionState: String(row.session_state) as StoredConversation["sessionState"],
     configOptions: parseJson<AgentConfigOption[]>(row.config_options, []),
@@ -334,6 +366,12 @@ function mapConversation(row: SqliteRow | undefined): StoredConversation | undef
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   }
+}
+
+function ensureColumn(database: DatabaseSync, table: string, column: string, definition: string): void {
+  const columns = database.prepare(`PRAGMA table_info(${table})`).all() as Array<Record<string, unknown>>
+  if (columns.some((item) => item.name === column)) return
+  database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
 }
 
 function mapRun(row: SqliteRow | undefined): StoredRun | undefined

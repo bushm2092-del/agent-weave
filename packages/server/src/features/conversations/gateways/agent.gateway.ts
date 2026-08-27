@@ -10,6 +10,14 @@ export type AgentSessionInput = {
   sessionKey: string
   agent: AgentProvider
   workspace: string
+  model?: string
+  systemPrompt?: string
+  mcpServers?: Array<{
+    name: string
+    command: string
+    args: string[]
+    env: Record<string, string>
+  }>
 }
 
 export type AgentSessionResult = {

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@agent-weave/contracts": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "acpx": "^0.13.1",
     "cors": "^2.8.5",
     "express": "^5.2.1",

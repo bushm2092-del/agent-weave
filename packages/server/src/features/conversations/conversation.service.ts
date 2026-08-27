@@ -13,7 +13,7 @@ import type {
 } from "@agent-weave/contracts"
 import { ConversationError } from "./conversation.errors.js"
 import { conversationEventBus, type ConversationEventBus } from "./conversation-event-bus.js"
-import { createSessionKey, type ConversationServicePort } from "./conversation.models.js"
+import { createSessionKey, type ConversationServicePort, type ManagedConversationInput } from "./conversation.models.js"
 import {
   AgentGatewayError,
   agentGateway,
@@ -31,6 +31,7 @@ import {
 export class ConversationService implements ConversationServicePort {
   private readonly processingConversations = new Set<string>()
   private readonly activeRuns = new Map<string, { conversationId: string; controller: AbortController }>()
+  private readonly runWaiters = new Map<string, Set<(run: Run) => void>>()
 
   constructor(
     private readonly gateway: AgentGateway,
@@ -39,6 +40,14 @@ export class ConversationService implements ConversationServicePort {
   ) {}
 
   async create(input: CreateConversationRequest): Promise<Conversation> {
+    return this.createConversation(input)
+  }
+
+  async createManaged(input: ManagedConversationInput): Promise<Conversation> {
+    return this.createConversation(input)
+  }
+
+  private async createConversation(input: CreateConversationRequest | ManagedConversationInput): Promise<Conversation> {
     const workspace = resolve(input.workspace)
     await this.assertWorkspace(workspace)
     const id = randomUUID()
@@ -48,6 +57,7 @@ export class ConversationService implements ConversationServicePort {
       agent: input.agent,
       workspace,
       sessionKey: createSessionKey(id),
+      ...("owner" in input ? { owner: input.owner, sessionContext: input.sessionContext } : {}),
       now,
     })
     this.eventBus.publish({
@@ -70,6 +80,41 @@ export class ConversationService implements ConversationServicePort {
 
   async createRun(conversationId: string, input: CreateRunRequest): Promise<Run> {
     const conversation = this.requireConversation(conversationId)
+    if (conversation.ownerKind === "team_member") {
+      throw new ConversationError("MANAGED_CONVERSATION", "Team member runs must be created through the team API.", 409)
+    }
+    return this.createConversationRun(conversation, input)
+  }
+
+  async createManagedRun(conversationId: string, ownerId: string, input: CreateRunRequest): Promise<Run> {
+    const conversation = this.requireManagedConversation(conversationId, ownerId)
+    return this.createConversationRun(conversation, input)
+  }
+
+  configureManagedSession(
+    conversationId: string,
+    ownerId: string,
+    sessionContext: ManagedConversationInput["sessionContext"],
+  ): void {
+    this.requireManagedConversation(conversationId, ownerId)
+    this.repository.updateConversation(conversationId, {
+      sessionContext,
+      updatedAt: new Date().toISOString(),
+    })
+  }
+
+  listManagedConversations(): Array<{ id: string; ownerId: string }> {
+    return this.repository
+      .listRestorableConversations()
+      .flatMap((conversation) =>
+        conversation.ownerKind === "team_member" && conversation.ownerId
+          ? [{ id: conversation.id, ownerId: conversation.ownerId }]
+          : [],
+      )
+  }
+
+  private async createConversationRun(conversation: StoredConversation, input: CreateRunRequest): Promise<Run> {
+    const conversationId = conversation.id
     await this.validateAttachments(conversation.workspace, input.attachments)
     const run = this.repository.createRun({
       id: randomUUID(),
@@ -145,37 +190,113 @@ export class ConversationService implements ConversationServicePort {
   async cancelRun(conversationId: string, runId: string): Promise<Run> {
     const run = this.requireRun(conversationId, runId)
     if (run.status === "queued") {
+      const completedAt = new Date().toISOString()
       const cancelled = this.repository.updateRun(runId, {
         status: "cancelled",
-        completedAt: new Date().toISOString(),
+        completedAt,
       })
+      this.cancelPendingPermissions(conversationId, runId, completedAt)
       this.eventBus.publish({ conversationId, runId, type: "run.cancelled", data: cancelled })
+      this.resolveRunWaiters(cancelled)
       return cancelled
     }
     if (run.status === "running") {
       this.activeRuns.get(runId)?.controller.abort("Cancelled by user")
-      await this.gateway.cancelRun(runId)
+      try {
+        await this.gateway.cancelRun(runId)
+      } catch {
+        // The persisted cancellation below remains authoritative.
+      }
+      const current = this.repository.getRun(runId)
+      if (current?.status === "running") {
+        const completedAt = new Date().toISOString()
+        const cancelled = this.repository.updateRun(runId, { status: "cancelled", completedAt })
+        this.cancelPendingPermissions(conversationId, runId, completedAt)
+        if (this.repository.getConversation(conversationId)) {
+          this.repository.updateConversation(conversationId, { status: "ready", updatedAt: completedAt })
+          this.eventBus.publish({ conversationId, runId, type: "run.cancelled", data: cancelled })
+        }
+        this.resolveRunWaiters(cancelled)
+      }
     }
     return this.repository.getRun(runId) ?? run
   }
 
   async delete(conversationId: string): Promise<void> {
     const conversation = this.requireConversation(conversationId)
+    if (conversation.ownerKind === "team_member") {
+      throw new ConversationError(
+        "MANAGED_CONVERSATION",
+        "Team member conversations must be removed through the team API.",
+        409,
+      )
+    }
+    await this.deleteConversation(conversation)
+  }
+
+  async deleteManaged(conversationId: string, ownerId: string): Promise<void> {
+    const conversation = this.requireManagedConversation(conversationId, ownerId)
+    await this.deleteConversation(conversation)
+  }
+
+  private async deleteConversation(conversation: StoredConversation): Promise<void> {
+    const conversationId = conversation.id
     const activeRun = [...this.activeRuns.entries()].find(([, value]) => value.conversationId === conversationId)
     if (activeRun) {
-      activeRun[1].controller.abort("Conversation deleted")
-      await this.gateway.cancelRun(activeRun[0])
+      await this.cancelRun(conversationId, activeRun[0]).catch(() => undefined)
     }
     try {
       await this.gateway.closeSession(sessionInput(conversation))
+    } catch {
+      // Persistence is authoritative when a local runtime cannot finish cleanup.
     } finally {
-      this.eventBus.publish({
-        conversationId,
-        type: "conversation.deleted",
-        data: { conversationId },
-      })
-      this.repository.deleteConversation(conversationId)
+      try {
+        this.eventBus.publish({
+          conversationId,
+          type: "conversation.deleted",
+          data: { conversationId },
+        })
+      } finally {
+        this.repository.deleteConversation(conversationId)
+      }
     }
+  }
+
+  getRun(conversationId: string, runId: string): Run {
+    return this.requireRun(conversationId, runId)
+  }
+
+  waitForRun(conversationId: string, runId: string): Promise<Run> {
+    const run = this.requireRun(conversationId, runId)
+    if (isTerminalRun(run)) return Promise.resolve(run)
+    return new Promise((resolve) => {
+      const waiters = this.runWaiters.get(runId) ?? new Set<(value: Run) => void>()
+      waiters.add(resolve)
+      this.runWaiters.set(runId, waiters)
+    })
+  }
+
+  waitUntilReady(conversationId: string): Promise<Conversation> {
+    const current = this.requireConversation(conversationId)
+    if (current.status === "ready" || current.status === "running") return Promise.resolve(publicConversation(current))
+    if (current.status === "failed") {
+      return Promise.reject(new ConversationError("CONVERSATION_FAILED", current.error ?? "Conversation failed.", 502))
+    }
+    return new Promise((resolve, reject) => {
+      const unsubscribe = this.eventBus.subscribe(conversationId, (event) => {
+        if (event.type === "conversation.ready") {
+          unsubscribe()
+          resolve(this.get(conversationId))
+        } else if (event.type === "conversation.failed") {
+          unsubscribe()
+          const failed = this.get(conversationId)
+          reject(new ConversationError("CONVERSATION_FAILED", failed.error ?? "Conversation failed.", 502))
+        } else if (event.type === "conversation.deleted") {
+          unsubscribe()
+          reject(new ConversationError("CONVERSATION_DELETED", "Conversation was deleted while starting.", 409))
+        }
+      })
+    })
   }
 
   eventsAfter(conversationId: string, sequence: number): ConversationEvent[] {
@@ -191,8 +312,26 @@ export class ConversationService implements ConversationServicePort {
   async restoreAll(): Promise<void> {
     await Promise.allSettled(
       this.repository.listRestorableConversations().map(async (conversation) => {
-        for (const run of this.repository.listInterruptedRuns(conversation.id)) {
-          this.repository.updateRun(run.id, { status: "queued", startedAt: null })
+        if (conversation.ownerKind === "team_member") {
+          for (const run of this.repository
+            .listRuns(conversation.id)
+            .filter((candidate) => candidate.status === "queued" || candidate.status === "running")) {
+            const cancelled = this.repository.updateRun(run.id, {
+              status: "cancelled",
+              completedAt: new Date().toISOString(),
+            })
+            this.cancelPendingPermissions(conversation.id, run.id, cancelled.completedAt ?? new Date().toISOString())
+            this.eventBus.publish({
+              conversationId: conversation.id,
+              runId: run.id,
+              type: "run.cancelled",
+              data: cancelled,
+            })
+          }
+        } else {
+          for (const run of this.repository.listInterruptedRuns(conversation.id)) {
+            this.repository.updateRun(run.id, { status: "queued", startedAt: null })
+          }
         }
         await this.initialize(conversation)
       }),
@@ -202,6 +341,7 @@ export class ConversationService implements ConversationServicePort {
   private async initialize(conversation: StoredConversation): Promise<void> {
     try {
       const result = await this.gateway.initializeSession(sessionInput(conversation))
+      if (!this.repository.getConversation(conversation.id)) return
       const updated = this.repository.updateConversation(conversation.id, {
         status: "ready",
         sessionState: result.state,
@@ -216,6 +356,7 @@ export class ConversationService implements ConversationServicePort {
       })
       void this.drainQueue(conversation.id)
     } catch (error) {
+      if (!this.repository.getConversation(conversation.id)) return
       const message = errorMessage(error)
       const updated = this.repository.updateConversation(conversation.id, {
         status: "failed",
@@ -272,6 +413,8 @@ export class ConversationService implements ConversationServicePort {
         signal: controller.signal,
         emit: (event) => this.handleRunEvent(conversation.id, run.id, event),
       })
+      const currentRun = this.repository.getRun(run.id)
+      if (!currentRun || currentRun.status !== "running" || !this.repository.getConversation(conversation.id)) return
       const completedAt = new Date().toISOString()
       const completed = this.repository.updateRun(run.id, {
         status: "completed",
@@ -291,7 +434,10 @@ export class ConversationService implements ConversationServicePort {
         type: "run.completed",
         data: completed,
       })
+      this.resolveRunWaiters(completed)
     } catch (error) {
+      const currentRun = this.repository.getRun(run.id)
+      if (!currentRun || currentRun.status !== "running") return
       const cancelled =
         controller.signal.aborted || (error instanceof AgentGatewayError && error.code === "AGENT_TURN_CANCELLED")
       const completedAt = new Date().toISOString()
@@ -312,12 +458,14 @@ export class ConversationService implements ConversationServicePort {
           data: failed,
         })
       }
+      this.resolveRunWaiters(failed)
     } finally {
       this.activeRuns.delete(run.id)
     }
   }
 
   private async handleRunEvent(conversationId: string, runId: string, event: AgentRunEvent): Promise<void> {
+    if (this.repository.getRun(runId)?.status !== "running" || !this.repository.getConversation(conversationId)) return
     if (event.type === "assistant.delta") {
       this.repository.appendAssistantText(runId, event.data.text)
     } else if (event.type === "thought.delta") {
@@ -343,12 +491,38 @@ export class ConversationService implements ConversationServicePort {
     return conversation
   }
 
+  private requireManagedConversation(conversationId: string, ownerId: string): StoredConversation {
+    const conversation = this.requireConversation(conversationId)
+    if (conversation.ownerKind !== "team_member" || conversation.ownerId !== ownerId) {
+      throw new ConversationError("MANAGED_CONVERSATION_OWNER_MISMATCH", "Managed conversation owner mismatch.", 409)
+    }
+    return conversation
+  }
+
   private requireRun(conversationId: string, runId: string): StoredRun {
     const run = this.repository.getRun(runId)
     if (!run || run.conversationId !== conversationId) {
       throw new ConversationError("RUN_NOT_FOUND", "Run not found.", 404)
     }
     return run
+  }
+
+  private resolveRunWaiters(run: Run): void {
+    const waiters = this.runWaiters.get(run.id)
+    if (!waiters) return
+    this.runWaiters.delete(run.id)
+    for (const resolve of waiters) resolve(run)
+  }
+
+  private cancelPendingPermissions(conversationId: string, runId: string, now: string): void {
+    for (const permission of this.repository.cancelPendingPermissions(runId, now)) {
+      this.eventBus.publish({
+        conversationId,
+        runId,
+        type: "permission.resolved",
+        data: { permissionId: permission.id, cancelled: true, resolvedAt: now },
+      })
+    }
   }
 
   private async assertWorkspace(workspace: string): Promise<void> {
@@ -386,12 +560,27 @@ function sessionInput(conversation: StoredConversation): AgentSessionInput {
     sessionKey: conversation.sessionKey,
     agent: conversation.agent,
     workspace: conversation.workspace,
+    ...conversation.sessionContext,
   }
 }
 
 function publicConversation(conversation: StoredConversation): Conversation {
-  const { sessionKey: _sessionKey, ...publicValue } = conversation
-  return publicValue
+  const {
+    sessionKey: _sessionKey,
+    sessionContext: _sessionContext,
+    ownerKind,
+    ownerId,
+    owner: _owner,
+    ...publicValue
+  } = conversation
+  return {
+    ...publicValue,
+    ...(ownerKind === "team_member" && ownerId ? { owner: { kind: ownerKind, id: ownerId } } : {}),
+  }
+}
+
+function isTerminalRun(run: Run): boolean {
+  return run.status === "completed" || run.status === "failed" || run.status === "cancelled"
 }
 
 function assertConfigValue(option: AgentConfigOption, input: SetConfigOptionRequest): void {

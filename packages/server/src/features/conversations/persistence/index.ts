@@ -1,8 +1,11 @@
 export type {
   AppendEventInput,
   ConversationRepository,
+  ConversationSessionContext,
   CreateConversationRecord,
   CreateRunRecord,
+  AgentMcpServerConfig,
+  ManagedConversationOwner,
   StoredConversation,
   StoredPermissionRequest,
   StoredRun,

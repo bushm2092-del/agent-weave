@@ -13,6 +13,7 @@ import {
 } from "tldraw"
 
 import { AGENT_RUNNERS, type AgentRunner } from "@/features/canvas/agent-options"
+import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
 import { conversationApi, ConversationWindow } from "@/features/conversations"
 import { ApiClientError } from "@/lib/api"
 
@@ -26,6 +27,9 @@ export type AgentShape = TLBaseShape<
     workspace: string
     title: string
     conversationId: string
+    teamId: string
+    slotId: string
+    role: "" | "leader" | "teammate"
   }
 >
 
@@ -38,6 +42,7 @@ declare module "tldraw" {
 const Versions = createShapePropsMigrationIds("agent", {
   AddConversationId: 1,
   ResizeConversationWindow: 2,
+  AddTeamBinding: 3,
 })
 
 export class AgentShapeUtil extends BaseBoxShapeUtil<AgentShape> {
@@ -50,6 +55,9 @@ export class AgentShapeUtil extends BaseBoxShapeUtil<AgentShape> {
     workspace: T.string,
     title: T.string,
     conversationId: T.string,
+    teamId: T.string,
+    slotId: T.string,
+    role: T.literalEnum("", "leader", "teammate"),
   }
   static override migrations = createShapePropsMigrationSequence({
     sequence: [
@@ -73,6 +81,19 @@ export class AgentShapeUtil extends BaseBoxShapeUtil<AgentShape> {
           props.h = 224
         },
       },
+      {
+        id: Versions.AddTeamBinding,
+        up: (props) => {
+          props.teamId = ""
+          props.slotId = ""
+          props.role = ""
+        },
+        down: (props) => {
+          delete props.teamId
+          delete props.slotId
+          delete props.role
+        },
+      },
     ],
   })
 
@@ -85,6 +106,9 @@ export class AgentShapeUtil extends BaseBoxShapeUtil<AgentShape> {
       workspace: "",
       title: "Codex agent",
       conversationId: "",
+      teamId: "",
+      slotId: "",
+      role: "",
     }
   }
 
@@ -114,14 +138,16 @@ function AgentCard({ editor, shape }: { editor: Editor; shape: AgentShape }) {
     <HTMLContainer className="agent-shape" style={{ width: shape.props.w, height: shape.props.h }}>
       {shape.props.conversationId ? (
         <ConversationWindow
-          accent={runner.accent}
           conversationId={shape.props.conversationId}
+          iconSrc={runner.iconSrc}
           onInteract={markHandled}
           provider={runner.provider}
           providerLabel={runner.label}
-          shortLabel={runner.shortLabel}
           title={shape.props.title}
           workspace={shape.props.workspace}
+          {...(shape.props.teamId && shape.props.slotId
+            ? { teamTarget: { teamId: shape.props.teamId, slotId: shape.props.slotId } }
+            : {})}
         />
       ) : (
         <LegacyAgent editor={editor} markHandled={markHandled} shape={shape} />
@@ -165,9 +191,7 @@ function LegacyAgent({
   return (
     <>
       <div className="agent-shape__header">
-        <div className="agent-shape__avatar" style={{ backgroundColor: runner.accent }}>
-          {runner.shortLabel}
-        </div>
+        <AgentRunnerIcon className="agent-shape__avatar" label={runner.label} src={runner.iconSrc} />
         <div className="agent-shape__identity">
           <strong>{shape.props.title}</strong>
           <span>{runner.label}</span>

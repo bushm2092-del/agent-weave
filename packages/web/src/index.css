@@ -304,7 +304,7 @@
   }
 
   .canvas-stage[data-file-sidebar-open="true"] {
-    right: 300px;
+    right: 320px;
   }
 
   .file-sidebar {
@@ -426,19 +426,19 @@
     @apply absolute bg-primary/70 content-[''];
   }
 
-  .selection-layout-divider[data-orientation='vertical'] {
+  .selection-layout-divider[data-orientation="vertical"] {
     @apply w-3 -translate-x-1/2 cursor-col-resize;
   }
 
-  .selection-layout-divider[data-orientation='vertical']::after {
+  .selection-layout-divider[data-orientation="vertical"]::after {
     @apply inset-y-0 left-1/2 w-px -translate-x-1/2;
   }
 
-  .selection-layout-divider[data-orientation='horizontal'] {
+  .selection-layout-divider[data-orientation="horizontal"] {
     @apply h-3 -translate-y-1/2 cursor-row-resize;
   }
 
-  .selection-layout-divider[data-orientation='horizontal']::after {
+  .selection-layout-divider[data-orientation="horizontal"]::after {
     @apply inset-x-0 top-1/2 h-px -translate-y-1/2;
   }
 
@@ -447,13 +447,13 @@
     @apply bg-primary;
   }
 
-  .selection-layout-divider[data-orientation='vertical']:hover::after,
-  .selection-layout-divider[data-orientation='vertical']:active::after {
+  .selection-layout-divider[data-orientation="vertical"]:hover::after,
+  .selection-layout-divider[data-orientation="vertical"]:active::after {
     @apply w-0.5;
   }
 
-  .selection-layout-divider[data-orientation='horizontal']:hover::after,
-  .selection-layout-divider[data-orientation='horizontal']:active::after {
+  .selection-layout-divider[data-orientation="horizontal"]:hover::after,
+  .selection-layout-divider[data-orientation="horizontal"]:active::after {
     @apply h-0.5;
   }
 
@@ -512,8 +512,8 @@
     @apply border-foreground bg-muted;
   }
 
-  .agent-runner-option > span {
-    @apply grid size-6 place-items-center rounded-sm text-[10px] font-semibold text-white;
+  .agent-runner-option__icon {
+    @apply size-6 rounded-sm;
   }
 
   .agent-composer select,
@@ -556,8 +556,16 @@
     @apply flex h-14 shrink-0 items-center gap-2.5 border-b px-3;
   }
 
+  .agent-runner-icon {
+    @apply grid shrink-0 place-items-center overflow-hidden border bg-white p-1;
+  }
+
+  .agent-runner-icon img {
+    @apply block size-full object-contain;
+  }
+
   .agent-shape__avatar {
-    @apply grid size-8 shrink-0 place-items-center rounded-md text-[11px] font-bold text-white;
+    @apply size-8 rounded-md;
   }
 
   .agent-shape__identity {
@@ -975,7 +983,7 @@
   }
 
   .agent-team-shape__header {
-    @apply flex h-16 items-center justify-between border-b border-zinc-300 bg-white/90 px-4;
+    @apply relative flex h-16 items-center justify-between border-b border-zinc-300 bg-white/90 px-4;
     border-radius: 6px 6px 0 0;
   }
 
@@ -994,6 +1002,340 @@
 
   .agent-team-shape__mode {
     @apply rounded-md border bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground;
+  }
+
+  .team-composer {
+    @apply max-h-[calc(100dvh-76px)] w-[460px] overflow-y-auto;
+  }
+
+  .team-composer__row {
+    @apply mt-4 grid grid-cols-2 gap-2;
+  }
+
+  .team-composer__row label {
+    @apply grid gap-1.5 text-xs font-medium text-muted-foreground;
+  }
+
+  .team-composer__row input,
+  .team-composer__member input,
+  .team-composer__member select,
+  .team-member-add input,
+  .team-member-add select {
+    @apply h-9 min-w-0 rounded-md border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring;
+  }
+
+  .team-composer__members {
+    @apply mt-4 border-t pt-4;
+  }
+
+  .team-composer__members > div:first-child,
+  .team-composer__member {
+    @apply flex items-center gap-2;
+  }
+
+  .team-composer__members > div:first-child {
+    @apply justify-between;
+  }
+
+  .team-composer__members label {
+    @apply text-xs font-medium text-muted-foreground;
+  }
+
+  .team-composer__members > p {
+    @apply mt-2 text-[11px] text-muted-foreground;
+  }
+
+  .team-composer__member {
+    @apply mt-2;
+  }
+
+  .team-composer__member input {
+    @apply flex-1;
+  }
+
+  .team-composer__member select {
+    @apply w-32;
+  }
+
+  .agent-team-shape__identity {
+    @apply min-w-0 flex-1;
+  }
+
+  .agent-team-shape__identity > span {
+    @apply flex items-center gap-1;
+  }
+
+  .agent-team-shape__identity svg {
+    @apply size-3;
+  }
+
+  .agent-team-shape__controls {
+    @apply ml-3 flex shrink-0 items-center gap-2;
+    pointer-events: all;
+  }
+
+  .agent-team-shape__controls > button {
+    @apply grid size-8 place-items-center rounded-md border bg-background text-foreground hover:bg-muted disabled:opacity-40;
+  }
+
+  .agent-team-shape__controls > button svg {
+    @apply size-3.5;
+  }
+
+  .agent-team-shape__status,
+  .team-member-row__status {
+    @apply rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium capitalize text-zinc-600;
+  }
+
+  .agent-team-shape__status[data-status="ready"],
+  .team-member-row__status[data-status="idle"] {
+    @apply border-emerald-200 bg-emerald-50 text-emerald-700;
+  }
+
+  .agent-team-shape__status[data-status="running"],
+  .team-member-row__status[data-status="running"] {
+    @apply border-sky-200 bg-sky-50 text-sky-700;
+  }
+
+  .agent-team-shape__status[data-status="starting"],
+  .agent-team-shape__status[data-status="accepted"],
+  .agent-team-shape__status[data-status="cancelling"],
+  .team-member-row__status[data-status="pending"],
+  .team-member-row__status[data-status="removing"],
+  .team-member-row__status[data-status="queued"] {
+    @apply border-amber-200 bg-amber-50 text-amber-700;
+  }
+
+  .agent-team-shape__status[data-status="failed"],
+  .team-member-row__status[data-status="failed"],
+  .team-member-row__status[data-status="blocked"] {
+    @apply border-red-200 bg-red-50 text-red-700;
+  }
+
+  .team-run-composer {
+    @apply absolute right-3 top-[70px] z-20 w-80 rounded-md border bg-white p-2 shadow-lg;
+    pointer-events: all;
+  }
+
+  .team-run-composer textarea {
+    @apply block min-h-20 w-full resize-none rounded-md border bg-background p-2 pr-9 text-xs leading-4 outline-none focus:ring-2 focus:ring-ring;
+  }
+
+  .team-run-composer > button {
+    @apply absolute bottom-4 right-4 grid size-7 place-items-center rounded-md bg-foreground text-background disabled:opacity-40;
+  }
+
+  .team-run-composer > button svg {
+    @apply size-3.5;
+  }
+
+  .team-run-composer p {
+    @apply mb-0 mt-1 text-[10px] text-red-600;
+  }
+
+  .team-inspector {
+    @apply absolute bottom-0 right-0 top-14 z-20 flex w-[320px] max-w-full flex-col border-l bg-background shadow-sm;
+  }
+
+  .team-inspector__header {
+    @apply flex h-14 shrink-0 items-center justify-between border-b px-3;
+  }
+
+  .team-inspector__header > div {
+    @apply min-w-0;
+  }
+
+  .team-inspector__header strong,
+  .team-inspector__header span {
+    @apply block truncate;
+  }
+
+  .team-inspector__header strong {
+    @apply text-xs font-semibold;
+  }
+
+  .team-inspector__header span {
+    @apply mt-0.5 text-[10px] capitalize text-muted-foreground;
+  }
+
+  .team-inspector__tabs {
+    @apply grid grid-cols-3 border-b bg-zinc-50 px-1 pt-1;
+  }
+
+  .team-inspector__tabs button {
+    @apply flex h-9 items-center justify-center gap-1 border-b-2 border-transparent bg-transparent text-[10px] font-medium text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring;
+  }
+
+  .team-inspector__tabs button[data-active="true"] {
+    @apply border-foreground text-foreground;
+  }
+
+  .team-inspector__tabs svg {
+    @apply size-3;
+  }
+
+  .team-inspector__body {
+    @apply min-h-0 flex-1 overflow-y-auto p-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring;
+  }
+
+  .team-inspector__section-title {
+    @apply mb-2 flex items-center justify-between text-[11px] font-medium text-muted-foreground;
+  }
+
+  .team-member-add {
+    @apply mb-3 grid grid-cols-[1fr_1fr_auto] gap-1.5 rounded-md border bg-zinc-50 p-2;
+  }
+
+  .team-member-add input,
+  .team-member-add select {
+    @apply h-7 px-2 text-[10px];
+  }
+
+  .team-spawn-request {
+    @apply mb-2 grid min-h-14 grid-cols-[minmax(0,1fr)_28px_28px] items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5;
+  }
+
+  .team-spawn-request > div {
+    @apply min-w-0;
+  }
+
+  .team-spawn-request strong,
+  .team-spawn-request span {
+    @apply block truncate;
+  }
+
+  .team-spawn-request strong {
+    @apply text-[11px] font-semibold text-amber-950;
+  }
+
+  .team-spawn-request span {
+    @apply mt-0.5 text-[9px] text-amber-800;
+  }
+
+  .team-spawn-request > button {
+    @apply grid size-7 place-items-center rounded-sm border bg-white text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  .team-spawn-request > button svg {
+    @apply size-3.5;
+  }
+
+  .team-member-list,
+  .team-task-list,
+  .team-activity-list {
+    @apply grid gap-1.5;
+  }
+
+  .team-member-row {
+    @apply grid min-h-14 grid-cols-[32px_minmax(0,1fr)_auto_auto] items-center gap-2 rounded-md border bg-white px-2.5;
+  }
+
+  .team-member-row__icon {
+    @apply size-7 rounded-md;
+  }
+
+  .team-member-row > div {
+    @apply min-w-0;
+  }
+
+  .team-member-row strong,
+  .team-member-row span {
+    @apply block truncate;
+  }
+
+  .team-member-row strong {
+    @apply text-[11px] font-semibold;
+  }
+
+  .team-member-row div span {
+    @apply mt-0.5 text-[9px] capitalize text-muted-foreground;
+  }
+
+  .team-member-row > button {
+    @apply grid size-6 place-items-center rounded-sm text-muted-foreground outline-none hover:bg-red-50 hover:text-red-600 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  .team-member-row > button svg {
+    @apply size-3;
+  }
+
+  .team-task-row {
+    @apply grid grid-cols-[8px_1fr] items-start gap-2 rounded-md border bg-white p-2.5;
+  }
+
+  .team-task-row > span {
+    @apply mt-1 size-2 rounded-full bg-zinc-300;
+  }
+
+  .team-task-row > span[data-status="in_progress"] {
+    @apply bg-sky-500;
+  }
+
+  .team-task-row > span[data-status="completed"] {
+    @apply bg-emerald-500;
+  }
+
+  .team-task-row > span[data-status="blocked"] {
+    @apply bg-red-500;
+  }
+
+  .team-task-row strong,
+  .team-task-row p,
+  .team-task-row small {
+    @apply block;
+  }
+
+  .team-task-row strong {
+    @apply text-[11px] font-semibold;
+  }
+
+  .team-task-row p {
+    @apply mb-1 mt-0.5 line-clamp-2 text-[10px] leading-4 text-muted-foreground;
+  }
+
+  .team-task-row small {
+    @apply text-[9px] capitalize text-zinc-400;
+  }
+
+  .team-activity-row {
+    @apply grid grid-cols-[8px_1fr] items-start gap-2 border-b px-1 py-2;
+  }
+
+  .team-activity-row > span {
+    @apply mt-1 size-1.5 rounded-full bg-zinc-400;
+  }
+
+  .team-activity-row strong,
+  .team-activity-row small {
+    @apply block capitalize;
+  }
+
+  .team-activity-row strong {
+    @apply text-[10px] font-medium;
+  }
+
+  .team-activity-row small {
+    @apply mt-0.5 text-[9px] text-muted-foreground;
+  }
+
+  .team-inspector__empty {
+    @apply flex min-h-48 flex-col items-center justify-center px-6 text-center;
+  }
+
+  .team-inspector__empty > svg {
+    @apply mb-2 size-8 rounded-md border bg-white p-1.5 text-zinc-500;
+  }
+
+  .team-inspector__empty strong {
+    @apply text-[11px];
+  }
+
+  .team-inspector__empty span {
+    @apply mt-1 text-[10px] leading-4 text-muted-foreground;
+  }
+
+  .team-inspector__error {
+    @apply mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-[10px] text-red-700;
   }
 }
 
@@ -1039,6 +1381,14 @@
 
   .file-sidebar {
     width: min(300px, calc(100vw - 40px));
+  }
+
+  .team-inspector {
+    width: min(320px, calc(100vw - 40px));
+  }
+
+  .team-composer__row {
+    @apply grid-cols-1;
   }
 }
 

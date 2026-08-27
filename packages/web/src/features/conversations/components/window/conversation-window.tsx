@@ -2,6 +2,7 @@ import type { AgentProvider } from "@agent-weave/contracts"
 import { AlertCircle, WifiOff } from "lucide-react"
 import { useEffect, type PointerEvent } from "react"
 
+import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
 import { ConfigOptionControls } from "@/features/conversations/components/configuration/config-option-controls"
 import { PromptComposer } from "@/features/conversations/components/composer/prompt-composer"
 import { MessageList } from "@/features/conversations/components/messages/message-list"
@@ -12,20 +13,20 @@ export function ConversationWindow({
   conversationId,
   provider,
   providerLabel,
-  shortLabel,
-  accent,
+  iconSrc,
   title,
   workspace,
   onInteract,
+  teamTarget,
 }: {
   conversationId: string
   provider: AgentProvider
   providerLabel: string
-  shortLabel: string
-  accent: string
+  iconSrc: string
   title: string
   workspace: string
   onInteract: (event: PointerEvent<HTMLElement>) => void
+  teamTarget?: { teamId: string; slotId: string }
 }) {
   const view = useConversationStore((state) => state.conversations[conversationId])
 
@@ -40,9 +41,7 @@ export function ConversationWindow({
   return (
     <>
       <div className="agent-shape__header">
-        <div className="agent-shape__avatar" style={{ backgroundColor: accent }}>
-          {shortLabel}
-        </div>
+        <AgentRunnerIcon className="agent-shape__avatar" label={providerLabel} src={iconSrc} />
         <div className="agent-shape__identity">
           <strong>{title}</strong>
           <span>{providerLabel}</span>
@@ -77,6 +76,7 @@ export function ConversationWindow({
           activeRun={activeRun}
           conversationId={conversationId}
           disabled={!conversation || conversation.status === "initializing" || conversation.status === "failed"}
+          {...(teamTarget ? { teamTarget } : {})}
         />
       </div>
 

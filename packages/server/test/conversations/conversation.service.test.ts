@@ -124,6 +124,129 @@ describe("ConversationService", () => {
     releaseRun?.()
     await waitFor(() => service.listRuns(created.id)[0]?.status === "completed")
   })
+
+  it("resolves pending permission requests when a run is cancelled", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "agent-weave-"))
+    temporaryDirectories.push(workspace)
+    let releaseRun: (() => void) | undefined
+    const runGate = new Promise<void>((resolve) => {
+      releaseRun = resolve
+    })
+    const gateway = createGateway()
+    gateway.run = async (input) => {
+      await input.emit({
+        type: "permission.requested",
+        data: {
+          permissionId: "permission-one",
+          toolCall: { name: "write_file" },
+          options: [{ optionId: "allow_once", name: "Allow once", kind: "allow_once" }],
+        },
+      })
+      await runGate
+      return { content: "Late result", configOptions: [] }
+    }
+    const repository = createMemoryConversationRepository()
+    const eventBus = new ConversationEventBus(repository)
+    const events: string[] = []
+    const service = new ConversationService(gateway, repository, eventBus)
+    const created = await service.create({ agent: "codex", workspace })
+    await waitFor(() => service.get(created.id).status === "ready")
+    const unsubscribe = service.subscribe(created.id, (event) => events.push(event.type))
+    const run = await service.createRun(created.id, { message: "Request access", attachments: [] })
+    await waitFor(() => repository.getPermissionRequest("permission-one")?.status === "pending")
+
+    const cancelled = await service.cancelRun(created.id, run.id)
+
+    assert.equal(cancelled.status, "cancelled")
+    assert.equal(repository.getPermissionRequest("permission-one")?.status, "cancelled")
+    assert.ok(events.includes("permission.resolved"))
+    unsubscribe()
+    releaseRun?.()
+  })
+
+  it("cancels interrupted managed runs so the team queue can replay them once", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "agent-weave-"))
+    temporaryDirectories.push(workspace)
+    const repository = createMemoryConversationRepository()
+    const eventBus = new ConversationEventBus(repository)
+    const service = new ConversationService(createGateway(), repository, eventBus)
+    const created = await service.createManaged({
+      agent: "codex",
+      workspace,
+      owner: { kind: "team_member", id: "member-one" },
+      sessionContext: {},
+    })
+    await waitFor(() => service.get(created.id).status === "ready")
+    const queued = repository.createRun({
+      id: crypto.randomUUID(),
+      conversationId: created.id,
+      message: "Queued work",
+      attachments: [],
+      now: new Date().toISOString(),
+    })
+    const running = repository.createRun({
+      id: crypto.randomUUID(),
+      conversationId: created.id,
+      message: "Interrupted work",
+      attachments: [],
+      now: new Date().toISOString(),
+    })
+    repository.updateRun(running.id, { status: "running", startedAt: new Date().toISOString() })
+
+    const restored = new ConversationService(createGateway(), repository, eventBus)
+    await restored.restoreAll()
+
+    assert.equal(repository.getRun(queued.id)?.status, "cancelled")
+    assert.equal(repository.getRun(running.id)?.status, "cancelled")
+    assert.equal(restored.get(created.id).status, "ready")
+  })
+
+  it("rejects public runs for a team-owned conversation", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "agent-weave-"))
+    temporaryDirectories.push(workspace)
+    const repository = createMemoryConversationRepository()
+    const service = new ConversationService(createGateway(), repository, new ConversationEventBus(repository))
+    const created = await service.createManaged({
+      agent: "codex",
+      workspace,
+      owner: { kind: "team_member", id: "member-one" },
+      sessionContext: {},
+    })
+
+    await assert.rejects(service.createRun(created.id, { message: "Bypass the team", attachments: [] }), {
+      code: "MANAGED_CONVERSATION",
+    })
+    assert.equal(service.listRuns(created.id).length, 0)
+  })
+
+  it("rejects readiness waiters when a managed conversation is deleted during initialization", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "agent-weave-"))
+    temporaryDirectories.push(workspace)
+    let releaseInitialization: (() => void) | undefined
+    const initializationGate = new Promise<void>((resolve) => {
+      releaseInitialization = resolve
+    })
+    const gateway = createGateway()
+    gateway.initializeSession = async () => {
+      await initializationGate
+      return { state: "created", configOptions: [] }
+    }
+    const repository = createMemoryConversationRepository()
+    const service = new ConversationService(gateway, repository, new ConversationEventBus(repository))
+    const created = await service.createManaged({
+      agent: "codex",
+      workspace,
+      owner: { kind: "team_member", id: "member-one" },
+      sessionContext: {},
+    })
+    const ready = service.waitUntilReady(created.id)
+
+    await service.deleteManaged(created.id, "member-one")
+    releaseInitialization?.()
+
+    await assert.rejects(ready, { code: "CONVERSATION_DELETED" })
+    assert.equal(repository.getConversation(created.id), undefined)
+  })
 })
 
 async function waitFor(predicate: () => boolean): Promise<void> {

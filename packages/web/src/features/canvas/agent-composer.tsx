@@ -3,6 +3,7 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { AGENT_RUNNERS, AGENT_RUNNER_IDS, type AgentRunner } from "@/features/canvas/agent-options"
+import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
 
 export type AgentDraft = {
   runner: AgentRunner
@@ -67,7 +68,7 @@ export function AgentComposer({ onClose, onCreate }: AgentComposerProps) {
                 type="button"
                 onClick={() => selectRunner(id)}
               >
-                <span style={{ backgroundColor: item.accent }}>{item.shortLabel}</span>
+                <AgentRunnerIcon className="agent-runner-option__icon" label={item.label} src={item.iconSrc} />
                 {item.label}
               </button>
             )

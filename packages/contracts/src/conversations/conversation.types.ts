@@ -47,6 +47,12 @@ export const conversationSchema = z.object({
   sessionState: sessionStateSchema,
   configOptions: z.array(agentConfigOptionSchema),
   error: z.string().optional(),
+  owner: z
+    .object({
+      kind: z.literal("team_member"),
+      id: z.string().uuid(),
+    })
+    .optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 })

@@ -37,10 +37,16 @@ type PendingPermission = {
   cleanup(): void
 }
 
+type RuntimeHandle = {
+  runtime: AcpRuntime
+  handle: AcpRuntimeHandle
+}
+
 export class AcpxAgentGateway implements AgentGateway {
-  private readonly runtime: AcpRuntime
+  private readonly defaultRuntime: AcpRuntime
   private readonly sessionStore: AcpSessionStore
-  private readonly handles = new Map<string, AcpRuntimeHandle>()
+  private readonly handles = new Map<string, RuntimeHandle>()
+  private readonly configuredRuntimes = new Map<string, AcpRuntime>()
   private readonly initializations = new Map<string, Promise<AgentSessionResult>>()
   private readonly runContexts = new Map<string, RunContext>()
   private readonly activeTurns = new Map<string, AcpRuntimeTurn>()
@@ -48,17 +54,7 @@ export class AcpxAgentGateway implements AgentGateway {
 
   constructor(runtime?: AcpRuntime, sessionStore?: AcpSessionStore) {
     this.sessionStore = sessionStore ?? createRuntimeStore({ stateDir: environment.acpxStateDir })
-    this.runtime =
-      runtime ??
-      createAcpRuntime({
-        cwd: process.cwd(),
-        sessionStore: this.sessionStore,
-        agentRegistry: createAgentRegistry(),
-        permissionMode: "deny-all",
-        nonInteractivePermissions: "fail",
-        timeoutMs: environment.acpxTimeoutMs,
-        onPermissionRequest: (request, context) => this.handlePermissionRequest(request, context.signal),
-      })
+    this.defaultRuntime = runtime ?? this.createRuntime()
   }
 
   async initializeSession(input: AgentSessionInput): Promise<AgentSessionResult> {
@@ -73,15 +69,15 @@ export class AcpxAgentGateway implements AgentGateway {
   }
 
   async getConfigOptions(input: AgentSessionInput): Promise<AgentConfigOption[]> {
-    const handle = await this.ensureHandle(input)
+    const { handle } = await this.ensureHandle(input)
     return this.readConfigOptions(handle)
   }
 
   async setConfigOption(
     input: AgentSessionInput & { configId: string; type: "select" | "boolean"; value: string | boolean },
   ): Promise<AgentConfigOption[]> {
-    const handle = await this.ensureHandle(input)
-    if (!this.runtime.setConfigOption) {
+    const { handle, runtime } = await this.ensureHandle(input)
+    if (!runtime.setConfigOption) {
       throw new AgentGatewayError("CONFIG_UPDATE_UNSUPPORTED", "This Agent does not support configuration updates.")
     }
     if (input.type === "boolean") {
@@ -93,19 +89,19 @@ export class AcpxAgentGateway implements AgentGateway {
     if (typeof input.value !== "string") {
       throw new AgentGatewayError("CONFIG_OPTION_VALUE_INVALID", "Configuration value must be a string.")
     }
-    await this.runtime.setConfigOption({ handle, key: input.configId, value: input.value })
+    await runtime.setConfigOption({ handle, key: input.configId, value: input.value })
     return this.readConfigOptions(handle)
   }
 
   async run(input: AgentRunInput): Promise<AgentRunResult> {
-    const handle = await this.ensureHandle(input)
+    const { handle, runtime } = await this.ensureHandle(input)
     const context: RunContext = { runId: input.runId, emit: input.emit }
     for (const sessionId of [handle.backendSessionId, handle.agentSessionId]) {
       if (sessionId) this.runContexts.set(sessionId, context)
     }
 
     const attachments = imageAttachments(input.attachments)
-    const turn = this.runtime.startTurn({
+    const turn = runtime.startTurn({
       handle,
       text: withWorkspaceFileReferences(input.message, input.attachments),
       ...(attachments ? { attachments } : {}),
@@ -198,13 +194,14 @@ export class AcpxAgentGateway implements AgentGateway {
   }
 
   async closeSession(input: AgentSessionInput): Promise<void> {
-    const handle = await this.ensureHandle(input)
+    const { handle, runtime } = await this.ensureHandle(input)
     try {
-      await this.runtime.close({ handle, reason: "Conversation deleted", discardPersistentState: true })
+      await runtime.close({ handle, reason: "Conversation deleted", discardPersistentState: true })
     } catch {
       // Some ACP agents do not implement session/close. Product deletion remains authoritative.
     } finally {
       this.handles.delete(input.sessionKey)
+      this.configuredRuntimes.delete(input.sessionKey)
       await rm(join(environment.acpxStateDir, "sessions", `${encodeURIComponent(input.sessionKey)}.json`), {
         force: true,
       })
@@ -213,26 +210,64 @@ export class AcpxAgentGateway implements AgentGateway {
 
   private async doInitializeSession(input: AgentSessionInput): Promise<AgentSessionResult> {
     const existingRecord = await this.sessionStore.load(input.sessionKey)
-    const handle = await this.runtime.ensureSession({
+    const runtime = this.runtimeFor(input)
+    const sessionOptions = {
+      ...(input.model ? { model: input.model } : {}),
+      ...(input.systemPrompt ? { systemPrompt: input.systemPrompt } : {}),
+    }
+    const handle = await runtime.ensureSession({
       sessionKey: input.sessionKey,
       agent: input.agent,
       mode: "persistent",
       cwd: input.workspace,
+      ...(Object.keys(sessionOptions).length > 0 ? { sessionOptions } : {}),
     })
-    this.handles.set(input.sessionKey, handle)
+    this.handles.set(input.sessionKey, { runtime, handle })
     return {
       state: existingRecord && !existingRecord.closed ? "resumed" : "created",
       configOptions: await this.readConfigOptions(handle),
     }
   }
 
-  private async ensureHandle(input: AgentSessionInput): Promise<AcpRuntimeHandle> {
+  private async ensureHandle(input: AgentSessionInput): Promise<RuntimeHandle> {
     const cached = this.handles.get(input.sessionKey)
     if (cached) return cached
     await this.initializeSession(input)
-    const handle = this.handles.get(input.sessionKey)
-    if (!handle) throw new AgentGatewayError("ACP_SESSION_INIT_FAILED", "Agent session was not initialized.")
-    return handle
+    const entry = this.handles.get(input.sessionKey)
+    if (!entry) throw new AgentGatewayError("ACP_SESSION_INIT_FAILED", "Agent session was not initialized.")
+    return entry
+  }
+
+  private runtimeFor(input: AgentSessionInput): AcpRuntime {
+    if (!input.mcpServers?.length) return this.defaultRuntime
+    const existing = this.configuredRuntimes.get(input.sessionKey)
+    if (existing) return existing
+    const runtime = this.createRuntime(input.mcpServers)
+    this.configuredRuntimes.set(input.sessionKey, runtime)
+    return runtime
+  }
+
+  private createRuntime(mcpServers: AgentSessionInput["mcpServers"] = []): AcpRuntime {
+    return createAcpRuntime({
+      cwd: process.cwd(),
+      sessionStore: this.sessionStore,
+      agentRegistry: createAgentRegistry(),
+      permissionMode: "deny-all",
+      nonInteractivePermissions: "fail",
+      timeoutMs: environment.acpxTimeoutMs,
+      ...(mcpServers.length > 0
+        ? {
+            mcpServers: mcpServers.map((server) => ({
+              type: "stdio" as const,
+              name: server.name,
+              command: server.command,
+              args: server.args,
+              env: Object.entries(server.env).map(([name, value]) => ({ name, value })),
+            })),
+          }
+        : {}),
+      onPermissionRequest: (request, context) => this.handlePermissionRequest(request, context.signal),
+    })
   }
 
   private async readConfigOptions(handle: AcpRuntimeHandle): Promise<AgentConfigOption[]> {
