@@ -132,6 +132,10 @@
     @apply mx-auto w-full max-w-6xl px-6 py-10;
   }
 
+  .home-content__error {
+    @apply mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700;
+  }
+
   .home-titlebar {
     @apply mb-6 flex items-end justify-between;
   }
@@ -272,12 +276,37 @@
   }
 
   .workspace-card:hover .workspace-card__menu,
-  .workspace-card__menu:focus-visible {
+  .workspace-card__menu:focus-visible,
+  .workspace-card__menu[data-open="true"] {
     @apply opacity-100;
   }
 
+  .workspace-card[data-busy="true"] {
+    @apply pointer-events-none opacity-60;
+  }
+
+  .workspace-card__menu-popover {
+    @apply absolute right-2 top-11 z-30 grid w-36 gap-0.5 rounded-md border bg-white p-1 shadow-lg;
+  }
+
+  .workspace-card__menu-popover button {
+    @apply flex h-8 items-center gap-2 rounded-sm px-2 text-left text-xs text-foreground outline-none hover:bg-muted focus-visible:bg-muted;
+  }
+
+  .workspace-card__menu-popover svg {
+    @apply size-3.5 text-muted-foreground;
+  }
+
+  .workspace-card__menu-popover .workspace-card__menu-danger {
+    @apply text-red-600 hover:bg-red-50 focus-visible:bg-red-50;
+  }
+
+  .workspace-card__menu-popover .workspace-card__menu-danger svg {
+    @apply text-red-500;
+  }
+
   .new-workspace-card {
-    @apply flex min-h-[274px] flex-col items-center justify-center rounded-lg border border-dashed bg-white/40 text-center text-foreground no-underline transition-colors hover:border-zinc-400 hover:bg-white;
+    @apply flex min-h-[274px] flex-col items-center justify-center rounded-lg border border-dashed bg-white/40 text-center text-foreground no-underline transition-colors hover:border-zinc-400 hover:bg-white disabled:pointer-events-none disabled:opacity-60;
   }
 
   .new-workspace-card > span {
@@ -295,12 +324,52 @@
   }
 
   .canvas-header {
-    @apply absolute inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b bg-background px-3 shadow-xs;
+    @apply absolute inset-x-0 top-0 z-20 flex h-11 items-center justify-between border-b bg-white/95 px-2.5 backdrop-blur-sm;
+    transition: transform 160ms ease;
+  }
+
+  .canvas-page[data-clean-ui="true"] .canvas-header {
+    pointer-events: none;
+    transform: translateY(-100%);
+  }
+
+  .canvas-page[data-clean-ui="true"] .canvas-stage {
+    inset: 0;
+  }
+
+  .canvas-page[data-clean-ui="true"] .tlui-layout,
+  .canvas-page[data-clean-ui="true"] .selection-layout-toolbar-layer,
+  .canvas-page[data-clean-ui="true"] .file-sidebar,
+  .canvas-page[data-clean-ui="true"] .team-inspector,
+  .canvas-page[data-clean-ui="true"] .agent-composer,
+  .canvas-page[data-clean-ui="true"] .canvas-error {
+    display: none !important;
+  }
+
+  .canvas-clean-ui__exit {
+    @apply absolute right-2 top-2 z-[900] rounded-full bg-white/80 opacity-30 shadow-sm backdrop-blur-sm transition-opacity hover:opacity-100 focus-visible:opacity-100;
+  }
+
+  .canvas-toolbox {
+    @apply absolute left-3 top-1/2 z-[400] flex -translate-y-1/2 flex-col items-center gap-1 rounded-lg border bg-white/95 p-1.5 shadow-lg backdrop-blur-sm;
+    pointer-events: all;
+  }
+
+  .canvas-toolbox__divider {
+    @apply my-0.5 h-px w-6 bg-border;
+  }
+
+  .canvas-error {
+    @apply absolute left-1/2 top-12 z-40 -translate-x-1/2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 shadow-sm;
+  }
+
+  .canvas-header__brand {
+    @apply size-7;
   }
 
   .canvas-stage {
-    @apply absolute inset-x-0 bottom-0 top-14;
-    transition: right 160ms ease;
+    @apply absolute inset-x-0 bottom-0 top-11;
+    transition: right 160ms ease, top 160ms ease;
   }
 
   .canvas-stage[data-file-sidebar-open="true"] {
@@ -308,7 +377,8 @@
   }
 
   .file-sidebar {
-    @apply absolute bottom-0 right-0 top-14 z-20 flex w-[300px] max-w-full flex-col border-l bg-background shadow-sm;
+    @apply absolute bottom-0 right-0 top-11 z-20 flex w-[300px] max-w-full flex-col border-l bg-background shadow-sm;
+    transition: top 160ms ease;
   }
 
   .file-sidebar__header {
@@ -458,7 +528,7 @@
   }
 
   .agent-composer {
-    @apply absolute right-3 top-16 z-30 w-[380px] max-w-[calc(100vw-24px)] border bg-background p-4 shadow-lg;
+    @apply absolute right-3 top-12 z-30 w-[380px] max-w-[calc(100vw-24px)] border bg-background p-4 shadow-lg;
     border-radius: var(--radius);
   }
 
@@ -599,6 +669,29 @@
 
   .agent-shape__status[data-status="failed"] {
     @apply border-red-200 bg-red-50 text-red-700;
+  }
+
+  .agent-shape__fullscreen-button {
+    @apply grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring;
+    pointer-events: all;
+  }
+
+  .agent-shape__fullscreen-button svg {
+    @apply size-3.5;
+  }
+
+  .agent-shape__fullscreen-placeholder {
+    @apply grid flex-1 place-items-center bg-zinc-50 text-xs text-muted-foreground;
+  }
+
+  .agent-fullscreen {
+    @apply fixed inset-0 z-[1000] bg-black/25 p-3 backdrop-blur-[2px];
+    font-family: "Geist Variable", sans-serif;
+  }
+
+  .agent-shape--fullscreen {
+    @apply size-full overflow-hidden border bg-card text-card-foreground shadow-2xl;
+    border-radius: 10px;
   }
 
   .agent-window__interactive {
@@ -1134,7 +1227,7 @@
   }
 
   .team-inspector {
-    @apply absolute bottom-0 right-0 top-14 z-20 flex w-[320px] max-w-full flex-col border-l bg-background shadow-sm;
+    @apply absolute bottom-0 right-0 top-11 z-20 flex w-[320px] max-w-full flex-col border-l bg-background shadow-sm;
   }
 
   .team-inspector__header {
@@ -1396,4 +1489,12 @@
   .workspace-grid {
     @apply grid-cols-2;
   }
+}
+
+/* tldraw ships unlayered styles, so clean mode must override them globally. */
+body.agent-weave-clean-ui .tlui-layout,
+body.agent-weave-clean-ui .tlui-menu-zone,
+body.agent-weave-clean-ui .tlui-navigation-panel,
+body.agent-weave-clean-ui .tlui-main-toolbar {
+  display: none !important;
 }

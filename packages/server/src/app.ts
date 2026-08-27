@@ -3,6 +3,7 @@ import cors from "cors"
 import express from "express"
 import { pinoHttp } from "pino-http"
 import { environment } from "./config/index.js"
+import { canvasRouter } from "./features/canvases/index.js"
 import { conversationRouter } from "./features/conversations/index.js"
 import { fileRouter } from "./features/files/index.js"
 import { teamRouter, teamToolRouter } from "./features/teams/index.js"
@@ -30,6 +31,7 @@ export function createApp() {
   app.get("/health", (_request, response) => {
     response.json(apiSuccess({ status: "ok" }, getRequestId(response)))
   })
+  app.use("/api/v1/canvases", canvasRouter)
   app.use("/api/v1/conversations", conversationRouter)
   app.use("/api/v1/files", fileRouter)
   app.use("/api/v1/teams", teamRouter)

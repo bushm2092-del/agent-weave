@@ -1,15 +1,26 @@
-import { ArrowLeft, Plus, Settings, Users } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
+import { ArrowLeft, Eye, Focus, Settings } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router"
-import { createShapeId, Tldraw, type Editor, type TLComponents, type TLShapeId, useValue } from "tldraw"
+import {
+  createShapeId,
+  getSnapshot,
+  loadSnapshot,
+  Tldraw,
+  type Editor,
+  type TLComponents,
+  type TLShapeId,
+  useValue,
+} from "tldraw"
 import "tldraw/tldraw.css"
 
 import { Button } from "@/components/ui/button"
 import { AgentComposer, type AgentDraft } from "@/features/canvas/agent-composer"
+import { CanvasToolbar } from "@/features/canvas/canvas-toolbar"
 import { SelectionLayoutToolbar } from "@/features/canvas/layout"
 import { AGENT_RUNNERS } from "@/features/canvas/agent-options"
 import { AgentShapeUtil } from "@/features/canvas/shapes/agent"
 import { AgentTeamShapeUtil } from "@/features/canvas/shapes/agent-team"
+import { canvasApi, canvasController } from "@/features/canvases"
 import { conversationApi, conversationController } from "@/features/conversations"
 import { FileSidebar, useSingleSelectedAgent } from "@/features/files"
 import {
@@ -28,22 +39,127 @@ import {
 } from "@/features/teams"
 import type { AgentTeamShape } from "@/features/canvas/shapes/agent-team"
 import { ApiClientError } from "@/lib/api"
-import { getWorkspace } from "@/pages/home/workspaces"
-import { useWorkspaceStore } from "@/stores/workspace-store"
 
 const shapeUtils = [AgentShapeUtil, AgentTeamShapeUtil]
-const tldrawComponents: TLComponents = { StylePanel: null }
-
 export function CanvasPage() {
   const { canvasId = "untitled" } = useParams()
   const [editor, setEditor] = useState<Editor | null>(null)
   const [composerOpen, setComposerOpen] = useState(false)
   const [teamComposerOpen, setTeamComposerOpen] = useState(false)
+  const [cleanUi, setCleanUi] = useState(false)
+  const [canvasName, setCanvasName] = useState("Untitled canvas")
+  const [canvasError, setCanvasError] = useState<string>()
   const selectedAgent = useSingleSelectedAgent(editor)
   const selectedTeam = useSingleSelectedTeam(editor)
-  const fallbackName = getWorkspace(canvasId)?.name ?? "Untitled canvas"
-  const canvasName = useWorkspaceStore((state) => state.canvasNames[canvasId] ?? fallbackName)
-  const renameCanvas = useWorkspaceStore((state) => state.renameCanvas)
+  const tldrawComponents = useMemo<TLComponents>(() => {
+    function Toolbar() {
+      return (
+        <CanvasToolbar
+          onCreateAgent={() => {
+            setTeamComposerOpen(false)
+            setComposerOpen(true)
+          }}
+          onCreateTeam={() => {
+            setComposerOpen(false)
+            setTeamComposerOpen(true)
+          }}
+        />
+      )
+    }
+    return { StylePanel: null, Toolbar }
+  }, [])
+
+  useEffect(() => {
+    if (!cleanUi) return
+    document.body.classList.add("agent-weave-clean-ui")
+    const exitOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setCleanUi(false)
+    }
+    document.addEventListener("keydown", exitOnEscape)
+    return () => {
+      document.body.classList.remove("agent-weave-clean-ui")
+      document.removeEventListener("keydown", exitOnEscape)
+    }
+  }, [cleanUi])
+
+  const enterCleanUi = () => {
+    setComposerOpen(false)
+    setTeamComposerOpen(false)
+    editor?.selectNone()
+    setCleanUi(true)
+  }
+
+  useEffect(() => {
+    let active = true
+    setCanvasError(undefined)
+    void canvasController
+      .get(canvasId)
+      .then((canvas) => {
+        if (active) setCanvasName(canvas.name)
+      })
+      .catch((error) => {
+        if (active) setCanvasError(error instanceof Error ? error.message : "Unable to load canvas.")
+      })
+    return () => {
+      active = false
+    }
+  }, [canvasId])
+
+  const mountEditor = useCallback(
+    async (mountedEditor: Editor) => {
+      try {
+        const snapshot = await canvasApi.getSnapshot(canvasId)
+        if (snapshot.document) {
+          loadSnapshot(mountedEditor.store, {
+            document: snapshot.document as ReturnType<typeof getSnapshot>["document"],
+          })
+          mountedEditor.clearHistory()
+        }
+        setEditor(mountedEditor)
+      } catch (error) {
+        setCanvasError(error instanceof Error ? error.message : "Unable to load canvas content.")
+      }
+    },
+    [canvasId],
+  )
+
+  useEffect(() => {
+    if (!editor) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    let saveTail = Promise.resolve()
+    const persist = () => {
+      const document = getSnapshot(editor.store).document
+      saveTail = saveTail
+        .catch(() => undefined)
+        .then(() => canvasApi.saveSnapshot(canvasId, { document }))
+        .then(() => undefined)
+        .catch((error) => {
+          setCanvasError(error instanceof Error ? error.message : "Unable to save canvas content.")
+        })
+    }
+    const unsubscribe = editor.store.listen(
+      () => {
+        if (timer) clearTimeout(timer)
+        timer = setTimeout(persist, 700)
+      },
+      { source: "all", scope: "document" },
+    )
+    return () => {
+      unsubscribe()
+      if (timer) {
+        clearTimeout(timer)
+        persist()
+      }
+    }
+  }, [canvasId, editor])
+
+  const saveCanvasName = () => {
+    const name = canvasName.trim()
+    if (!name) return
+    void canvasController.update(canvasId, { name }).catch((error) => {
+      setCanvasError(error instanceof Error ? error.message : "Unable to rename canvas.")
+    })
+  }
 
   useEffect(() => {
     if (!editor) return
@@ -235,30 +351,33 @@ export function CanvasPage() {
   )
 
   return (
-    <main className="relative h-dvh w-dvw overflow-hidden bg-background">
+    <main
+      className="canvas-page relative h-dvh w-dvw overflow-hidden bg-background"
+      data-clean-ui={cleanUi}
+    >
       <div className="canvas-stage" data-file-sidebar-open={Boolean(selectedAgent || selectedTeam)}>
         <Tldraw
+          key={canvasId}
           components={tldrawComponents}
-          onMount={setEditor}
-          persistenceKey={`agent-weave-canvas-${canvasId}`}
+          onMount={(mountedEditor) => void mountEditor(mountedEditor)}
           shapeUtils={shapeUtils}
         />
-        {editor && <SelectionLayoutToolbar editor={editor} />}
+        {editor && !cleanUi && <SelectionLayoutToolbar editor={editor} />}
       </div>
 
-      {selectedAgent && (
+      {!cleanUi && selectedAgent && (
         <FileSidebar
           key={`${selectedAgent.id}:${selectedAgent.props.workspace}`}
           workspace={selectedAgent.props.workspace}
         />
       )}
-      {selectedTeam?.props.teamId && (
+      {!cleanUi && selectedTeam?.props.teamId && (
         <TeamInspector teamId={selectedTeam.props.teamId} onClose={() => editor?.selectNone()} />
       )}
 
-      <header className="canvas-header">
+      {!cleanUi && <header className="canvas-header">
         <div className="flex min-w-0 items-center gap-2">
-          <Button asChild size="icon" variant="ghost">
+          <Button asChild size="icon-sm" variant="ghost">
             <Link to="/" aria-label="Back to canvases">
               <ArrowLeft />
             </Link>
@@ -268,24 +387,38 @@ export function CanvasPage() {
             aria-label="Canvas name"
             className="min-w-0 max-w-56 rounded-sm bg-transparent px-1 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={canvasName}
-            onChange={(event) => renameCanvas(canvasId, event.target.value)}
+            onBlur={saveCanvasName}
+            onChange={(event) => setCanvasName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur()
+            }}
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setTeamComposerOpen((open) => !open)}>
-            <Users data-icon="inline-start" />
-            Agent team
-          </Button>
-          <Button onClick={() => setComposerOpen((open) => !open)}>
-            <Plus data-icon="inline-start" />
-            New agent
-          </Button>
-          <Button size="icon" variant="ghost" aria-label="Workspace settings">
+          <Button size="icon-sm" variant="ghost" aria-label="Workspace settings">
             <Settings />
           </Button>
+          <Button size="icon-sm" variant="ghost" aria-label="Show only whiteboard" title="Clean UI" onClick={enterCleanUi}>
+            <Focus />
+          </Button>
         </div>
-      </header>
+      </header>}
+
+      {!cleanUi && canvasError && <div className="canvas-error">{canvasError}</div>}
+
+      {cleanUi && (
+        <Button
+          className="canvas-clean-ui__exit"
+          size="icon-sm"
+          variant="outline"
+          aria-label="Restore interface"
+          title="Restore interface (Esc)"
+          onClick={() => setCleanUi(false)}
+        >
+          <Eye />
+        </Button>
+      )}
 
       {composerOpen && <AgentComposer onClose={() => setComposerOpen(false)} onCreate={createAgent} />}
       {teamComposerOpen && <CreateTeamDialog onClose={() => setTeamComposerOpen(false)} onCreate={createTeam} />}

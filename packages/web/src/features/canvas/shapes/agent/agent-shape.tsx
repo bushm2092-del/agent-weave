@@ -1,6 +1,7 @@
 /* oxlint-disable react/only-export-components -- tldraw shape utilities own their renderers. */
 import { Link2 } from "lucide-react"
-import { useState, type PointerEvent } from "react"
+import { useEffect, useState, type PointerEvent } from "react"
+import { createPortal } from "react-dom"
 import {
   BaseBoxShapeUtil,
   createShapePropsMigrationIds,
@@ -129,30 +130,55 @@ export class AgentShapeUtil extends BaseBoxShapeUtil<AgentShape> {
 
 function AgentCard({ editor, shape }: { editor: Editor; shape: AgentShape }) {
   const runner = AGENT_RUNNERS[shape.props.runner]
+  const [fullscreen, setFullscreen] = useState(false)
   const markHandled = (event: PointerEvent<HTMLElement>) => {
     if (!editor.getSelectedShapeIds().includes(shape.id)) editor.select(shape.id)
     editor.markEventAsHandled(event)
   }
 
+  useEffect(() => {
+    if (!fullscreen) return
+    const exitOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFullscreen(false)
+    }
+    document.addEventListener("keydown", exitOnEscape)
+    return () => document.removeEventListener("keydown", exitOnEscape)
+  }, [fullscreen])
+
+  const conversationWindow = shape.props.conversationId ? (
+    <ConversationWindow
+      conversationId={shape.props.conversationId}
+      fullscreen={fullscreen}
+      iconSrc={runner.iconSrc}
+      onInteract={markHandled}
+      onToggleFullscreen={() => setFullscreen((value) => !value)}
+      provider={runner.provider}
+      providerLabel={runner.label}
+      title={shape.props.title}
+      workspace={shape.props.workspace}
+      {...(shape.props.teamId && shape.props.slotId
+        ? { teamTarget: { teamId: shape.props.teamId, slotId: shape.props.slotId } }
+        : {})}
+    />
+  ) : null
+
   return (
-    <HTMLContainer className="agent-shape" style={{ width: shape.props.w, height: shape.props.h }}>
-      {shape.props.conversationId ? (
-        <ConversationWindow
-          conversationId={shape.props.conversationId}
-          iconSrc={runner.iconSrc}
-          onInteract={markHandled}
-          provider={runner.provider}
-          providerLabel={runner.label}
-          title={shape.props.title}
-          workspace={shape.props.workspace}
-          {...(shape.props.teamId && shape.props.slotId
-            ? { teamTarget: { teamId: shape.props.teamId, slotId: shape.props.slotId } }
-            : {})}
-        />
-      ) : (
+    <>
+      <HTMLContainer className="agent-shape" style={{ width: shape.props.w, height: shape.props.h }}>
+        {conversationWindow && !fullscreen ? conversationWindow : fullscreen ? (
+          <div className="agent-shape__fullscreen-placeholder">Agent is open fullscreen</div>
+        ) : (
         <LegacyAgent editor={editor} markHandled={markHandled} shape={shape} />
-      )}
-    </HTMLContainer>
+        )}
+      </HTMLContainer>
+      {fullscreen && conversationWindow &&
+        createPortal(
+          <div className="agent-fullscreen" role="dialog" aria-label={`${shape.props.title} fullscreen`}>
+            <div className="agent-shape agent-shape--fullscreen">{conversationWindow}</div>
+          </div>,
+          document.body,
+        )}
+    </>
   )
 }
 

@@ -1,5 +1,5 @@
 import type { AgentProvider } from "@agent-weave/contracts"
-import { AlertCircle, WifiOff } from "lucide-react"
+import { AlertCircle, Maximize2, Minimize2, WifiOff } from "lucide-react"
 import { useEffect, type PointerEvent } from "react"
 
 import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
@@ -17,6 +17,8 @@ export function ConversationWindow({
   title,
   workspace,
   onInteract,
+  fullscreen,
+  onToggleFullscreen,
   teamTarget,
 }: {
   conversationId: string
@@ -26,6 +28,8 @@ export function ConversationWindow({
   title: string
   workspace: string
   onInteract: (event: PointerEvent<HTMLElement>) => void
+  fullscreen: boolean
+  onToggleFullscreen: () => void
   teamTarget?: { teamId: string; slotId: string }
 }) {
   const view = useConversationStore((state) => state.conversations[conversationId])
@@ -49,6 +53,17 @@ export function ConversationWindow({
         <span className="agent-shape__status" data-status={status}>
           {statusLabel(status)}
         </span>
+        <button
+          className="agent-shape__fullscreen-button"
+          type="button"
+          aria-label={fullscreen ? "Exit fullscreen" : "Open agent fullscreen"}
+          title={fullscreen ? "Exit fullscreen (Esc)" : "Open agent fullscreen"}
+          onClick={onToggleFullscreen}
+          onPointerDown={onInteract}
+          onPointerUp={onInteract}
+        >
+          {fullscreen ? <Minimize2 /> : <Maximize2 />}
+        </button>
       </div>
 
       <div className="agent-window__interactive" onPointerDown={onInteract} onPointerUp={onInteract}>

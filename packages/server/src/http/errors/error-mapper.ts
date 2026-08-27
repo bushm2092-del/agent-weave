@@ -1,5 +1,6 @@
 import { isAcpRuntimeError } from "acpx/runtime"
 import { ZodError } from "zod"
+import { CanvasError } from "../../features/canvases/canvas.errors.js"
 import { AgentGatewayError } from "../../features/conversations/gateways/agent.gateway.js"
 import { ConversationError } from "../../features/conversations/conversation.errors.js"
 import { FileApiError } from "../../features/files/file.errors.js"
@@ -30,6 +31,10 @@ export function mapHttpError(error: unknown): MappedHttpError {
       message: error.message,
       ...(error.details === undefined ? {} : { details: error.details }),
     }
+  }
+
+  if (error instanceof CanvasError) {
+    return { status: error.status, code: error.code, message: error.message }
   }
 
   if (error instanceof ConversationError) {

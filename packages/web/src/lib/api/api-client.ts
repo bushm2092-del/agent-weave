@@ -35,6 +35,10 @@ class ApiClient {
     return this.request<T>({ ...config, method: "PATCH", url, data })
   }
 
+  put<T, TBody = unknown>(url: string, data?: TBody, config?: RequestConfig): Promise<T> {
+    return this.request<T>({ ...config, method: "PUT", url, data })
+  }
+
   delete<T>(url: string, config?: RequestConfig): Promise<T> {
     return this.request<T>({ ...config, method: "DELETE", url })
   }
