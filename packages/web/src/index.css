@@ -102,9 +102,18 @@
     @apply flex items-center gap-2.5 text-sm no-underline;
   }
 
-  .home-brand > span,
+  .home-brand > img,
   .canvas-header__brand {
-    @apply grid size-8 shrink-0 place-items-center rounded-md bg-foreground text-xs font-semibold text-background;
+    @apply grid size-8 shrink-0 place-items-center;
+  }
+
+  .home-brand > img,
+  .canvas-header__brand img {
+    @apply object-cover;
+  }
+
+  .canvas-header__brand img {
+    @apply size-full;
   }
 
   .home-brand strong {

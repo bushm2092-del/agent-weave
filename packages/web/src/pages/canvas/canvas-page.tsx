@@ -101,7 +101,7 @@ export function CanvasPage() {
               <ArrowLeft />
             </Link>
           </Button>
-          <div className="canvas-header__brand">AW</div>
+          <div className="canvas-header__brand"><img src="/icon.png" alt="" /></div>
           <input
             aria-label="Canvas name"
             className="min-w-0 max-w-56 rounded-sm bg-transparent px-1 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"

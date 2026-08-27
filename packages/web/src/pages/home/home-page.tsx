@@ -35,7 +35,7 @@ export function HomePage() {
     <main className="home-page">
       <header className="home-header">
         <Link className="home-brand" to="/" aria-label="AgentWeave home">
-          <span>AW</span>
+          <img src="/icon.png" alt="" />
           <strong>AgentWeave</strong>
         </Link>
 
