@@ -1,0 +1,57 @@
+@reference "../../index.css";
+
+.preview {
+  @apply relative h-40 overflow-hidden border-b bg-zinc-100;
+  background-image: radial-gradient(circle, rgb(161 161 170 / 32%) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.preview::after {
+  @apply absolute inset-x-0 bottom-0 h-10;
+  content: "";
+  background: linear-gradient(to bottom, transparent, rgb(250 250 250 / 75%));
+}
+
+.preview[data-thumbnail="true"]::after {
+  display: none;
+}
+
+.preview > img {
+  @apply h-full w-full object-contain;
+}
+
+.team {
+  @apply absolute left-[12%] top-[18%] h-[64%] w-[73%] rounded-md border border-dashed border-zinc-400/70 bg-white/45;
+}
+
+.team span {
+  @apply absolute left-3 h-1.5 rounded-full bg-zinc-300;
+}
+
+.team span:nth-child(1) { @apply top-3 w-12 bg-zinc-500; }
+.team span:nth-child(2) { @apply top-7 w-7; }
+.team span:nth-child(3) { @apply right-3 top-3 size-3 rounded-sm; left: auto; }
+
+.agent {
+  @apply absolute z-10 h-[54px] w-[86px] rounded-md border bg-white p-2 shadow-sm;
+}
+
+.agentOne { @apply left-[21%] top-[47%]; }
+.agentTwo { @apply right-[20%] top-[36%]; }
+
+.agent span {
+  @apply float-left mr-2 grid size-6 place-items-center rounded-sm text-[8px] font-bold text-white;
+}
+
+.preview[data-accent="coral"] .agent span { @apply bg-rose-500; }
+.preview[data-accent="green"] .agent span { @apply bg-emerald-600; }
+.preview[data-accent="blue"] .agent span { @apply bg-sky-600; }
+
+.agent i { @apply mt-1 block h-1.5 rounded-full bg-zinc-200; }
+.agent i:last-child { @apply w-8; }
+
+.preview svg {
+  @apply absolute inset-0 z-0 h-full w-full fill-none stroke-zinc-400;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}

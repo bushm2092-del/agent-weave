@@ -25,6 +25,7 @@ import devopsEngineerAvatar from '@/assets/assistant/devops-engineer.png'
 import productManagerAvatar from '@/assets/assistant/product-manager.png'
 import projectManagerAvatar from '@/assets/assistant/project-manager.png'
 import uiDesignerAvatar from '@/assets/assistant/ui-designer.png'
+import previewStyles from './workspace-preview.module.css'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -101,16 +102,16 @@ function HomeSidebar({
 
 function WorkspacePreview({ workspace }: { workspace: CanvasSummary }) {
   return (
-    <div className="workspace-card__preview" data-accent={workspace.accent} data-thumbnail={!!workspace.thumbnailDataUrl}>
+    <div className={previewStyles.preview} data-accent={workspace.accent} data-thumbnail={!!workspace.thumbnailDataUrl}>
       {workspace.thumbnailDataUrl ? (
         <img alt="" src={workspace.thumbnailDataUrl} />
       ) : (
         <>
-          <div className="workspace-card__team"><span /><span /><span /></div>
-          <div className="workspace-card__agent workspace-card__agent--one">
+          <div className={previewStyles.team}><span /><span /><span /></div>
+          <div className={`${previewStyles.agent} ${previewStyles.agentOne}`}>
             <span>CD</span><i /><i />
           </div>
-          <div className="workspace-card__agent workspace-card__agent--two">
+          <div className={`${previewStyles.agent} ${previewStyles.agentTwo}`}>
             <span>OC</span><i /><i />
           </div>
           <svg aria-hidden="true" viewBox="0 0 320 140">
@@ -221,18 +222,18 @@ export function HomePage() {
   }
 
   return (
-    <SidebarProvider className="home-page" style={{ "--sidebar-width": "244px", "--sidebar-width-icon": "76px", "--sidebar-width-mobile": "280px" } as CSSProperties}>
+    <SidebarProvider className="min-h-dvh bg-background text-foreground" style={{ "--sidebar-width": "244px", "--sidebar-width-icon": "76px", "--sidebar-width-mobile": "280px" } as CSSProperties}>
         <HomeSidebar activeSection={activeSection} canvasCount={canvases.length} onSelect={selectSection} />
-        <SidebarInset className="home-main">
-          <header className="home-header">
-            <div className="home-header__leading">
-              <SidebarTrigger />
-              <Link className="home-brand" to="/" aria-label="AgentWeave home">
-                <img src="/icon.png" alt="" />
-                <strong>AgentWeave</strong>
+        <SidebarInset className="min-h-dvh min-w-0">
+          <header className="flex h-16 items-center justify-end border-b bg-white px-5 max-md:justify-between max-md:px-3">
+            <div className="hidden items-center gap-2 max-md:flex">
+              <SidebarTrigger className="hidden max-md:inline-flex" />
+              <Link className="flex items-center gap-2.5 text-sm no-underline" to="/" aria-label="AgentWeave home">
+                <img className="grid size-8 shrink-0 place-items-center object-cover" src="/icon.png" alt="" />
+                <strong className="font-semibold max-md:hidden">AgentWeave</strong>
               </Link>
             </div>
-            <div className="home-header__actions">
+            <div className="flex items-center gap-2">
               <Button size="icon" variant="ghost" aria-label="Search canvases"><Search /></Button>
               <Button disabled={creating} onClick={() => void createCanvas()}>
                 <Plus data-icon="inline-start" />{creating ? "Creating…" : "New canvas"}
@@ -240,7 +241,7 @@ export function HomePage() {
             </div>
           </header>
 
-          <section className="home-content">
+          <section className="mx-auto w-full max-w-6xl px-8 py-10 max-lg:px-5 max-sm:px-4 max-sm:py-6">
           {activeSection === "canvases" ? (
             <>
               <div className="home-titlebar">
@@ -248,18 +249,18 @@ export function HomePage() {
                 <span>{canvases.length} {canvases.length === 1 ? "canvas" : "canvases"}</span>
               </div>
 
-              {(error || actionError) && <p className="home-content__error">{actionError ?? error}</p>}
-              <div className="workspace-grid" aria-busy={loading}>
+              {(error || actionError) && <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{actionError ?? error}</p>}
+              <div className="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1" aria-busy={loading}>
           {canvases.map((workspace) => (
-            <article className="workspace-card" data-busy={busyCanvasId === workspace.id} key={workspace.id}>
-              <Link to={`/canvas/${workspace.id}`} aria-label={`Open ${workspace.name}`}>
+            <article className="group relative overflow-hidden rounded-lg border bg-card shadow-xs transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md data-[busy=true]:pointer-events-none data-[busy=true]:opacity-60" data-busy={busyCanvasId === workspace.id} key={workspace.id}>
+              <Link className="block text-inherit no-underline" to={`/canvas/${workspace.id}`} aria-label={`Open ${workspace.name}`}>
                 <WorkspacePreview workspace={workspace} />
-                <div className="workspace-card__body">
-                  <div className="workspace-card__title">
-                    <div><h2>{workspace.name}</h2><p>{workspace.description}</p></div>
-                    <ArrowUpRight />
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0"><h2 className="m-0 text-sm font-semibold">{workspace.name}</h2><p className="mb-0 mt-1 truncate text-xs text-muted-foreground">{workspace.description}</p></div>
+                    <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-zinc-400 transition-colors group-hover:text-foreground" />
                   </div>
-                  <div className="workspace-card__meta">
+                  <div className="mt-4 flex items-center gap-3 border-t pt-3 text-[11px] text-muted-foreground [&_span]:flex [&_span]:items-center [&_span]:gap-1 [&_span:last-child]:ml-auto [&_svg]:size-3">
                     <span><Bot /> {workspace.agents} agents</span>
                     <span><Users /> {workspace.teams} {workspace.teams === 1 ? 'team' : 'teams'}</span>
                     <span><Clock3 /> {formatUpdatedAt(workspace.updatedAt)}</span>
@@ -268,7 +269,7 @@ export function HomePage() {
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="workspace-card__menu" size="icon-sm" variant="outline" aria-label={`More options for ${workspace.name}`} disabled={busyCanvasId === workspace.id}>
+                  <Button className="absolute right-2 top-2 z-20 border bg-white/90 opacity-0 shadow-xs transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100" size="icon-sm" variant="outline" aria-label={`More options for ${workspace.name}`} disabled={busyCanvasId === workspace.id}>
                     <MoreHorizontal />
                   </Button>
                 </DropdownMenuTrigger>
@@ -281,8 +282,8 @@ export function HomePage() {
             </article>
           ))}
 
-          <Button className="new-workspace-card" type="button" variant="outline" disabled={creating} onClick={() => void createCanvas()}>
-            <span><Plus /></span><strong>{creating ? "Creating…" : "New canvas"}</strong><small>Start with an empty workspace</small>
+          <Button className="flex min-h-[274px] flex-col items-center justify-center rounded-lg border border-dashed bg-white/40 text-center text-foreground no-underline transition-colors hover:border-zinc-400 hover:bg-white disabled:pointer-events-none disabled:opacity-60" type="button" variant="outline" disabled={creating} onClick={() => void createCanvas()}>
+            <span className="mb-3 grid size-9 place-items-center rounded-md border bg-white shadow-xs"><Plus className="size-4" /></span><strong className="text-sm font-medium">{creating ? "Creating…" : "New canvas"}</strong><small className="mt-1 text-xs text-muted-foreground">Start with an empty workspace</small>
           </Button>
               </div>
             </>
@@ -292,14 +293,14 @@ export function HomePage() {
                 <div><p>Library</p><h1>Role presets</h1><small>Persisted roles inject real instructions into team agents.</small></div>
                 <div className="role-preset-toolbar"><label className="role-preset-search"><Search /><Input value={presetQuery} onChange={(event) => setPresetQuery(event.target.value)} placeholder="Search roles" aria-label="Search role presets" /></label><Button onClick={() => setPresetDialog("new")}><Plus />New role</Button></div>
               </div>
-              {presetError && <p className="home-content__error">{presetError}</p>}
+              {presetError && <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{presetError}</p>}
               <div className="role-preset-grid" aria-busy={presetsLoading}>
                 {visiblePresets.map((preset) => {
                   const avatar = presetAvatar(preset)
                   return (
                     <article className="role-preset-card" key={preset.id}>
                       <Button className="role-preset-card__main" type="button" variant="ghost" onClick={() => setPresetDialog(preset)}>
-                        <img className="role-preset-card__avatar" src={avatar} alt="" />
+                        <img className="size-11 shrink-0 rounded-full border border-blue-100 bg-blue-50 object-cover" src={avatar} alt="" />
                         <span className="role-preset-card__content"><small>{preset.category} · {preset.agent}</small><strong>{preset.name}</strong><span>{preset.description}</span></span>
                         <ChevronRight />
                       </Button>

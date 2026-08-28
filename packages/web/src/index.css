@@ -141,54 +141,16 @@
 }
 
 @layer components {
-  .home-page {
-    @apply min-h-dvh bg-background text-foreground;
-  }
-
-  .home-header {
-    @apply flex h-16 items-center justify-end border-b bg-white px-5;
-  }
-
-  .home-header__leading {
-    @apply hidden items-center gap-2;
-  }
-
-  .home-brand {
-    @apply flex items-center gap-2.5 text-sm no-underline;
-  }
-
-  .home-brand > img,
   .canvas-header__brand {
     @apply grid size-8 shrink-0 place-items-center;
   }
 
-  .home-brand > img,
   .canvas-header__brand img {
     @apply object-cover;
   }
 
   .canvas-header__brand img {
     @apply size-full;
-  }
-
-  .home-brand strong {
-    @apply font-semibold;
-  }
-
-  .home-header__actions {
-    @apply flex items-center gap-2;
-  }
-
-  .home-main {
-    @apply min-h-dvh min-w-0;
-  }
-
-  .home-content {
-    @apply mx-auto w-full max-w-6xl px-8 py-10;
-  }
-
-  .home-content__error {
-    @apply mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700;
   }
 
   .home-titlebar {
@@ -244,10 +206,6 @@
     @apply flex size-full min-h-32 items-start gap-3 whitespace-normal p-4 pr-14 text-left focus-visible:ring-2 focus-visible:ring-ring;
   }
 
-  .role-preset-card__avatar {
-    @apply size-11 shrink-0 rounded-full border border-blue-100 bg-blue-50 object-cover;
-  }
-
   .role-preset-card__content {
     @apply min-w-0 flex-1;
   }
@@ -282,25 +240,6 @@
     @apply size-3.5;
   }
 
-  .role-preset-dialog {
-    @apply max-h-[calc(100dvh-32px)] max-w-xl gap-4 overflow-y-auto;
-  }
-
-  .role-preset-dialog__header {
-    @apply flex-row items-start gap-3 border-b pb-4 pr-8;
-  }
-
-  .role-preset-dialog__header > span {
-    @apply grid size-9 shrink-0 place-items-center rounded-md bg-emerald-100 text-emerald-700;
-  }
-
-  .role-preset-dialog__header > span svg { @apply size-4; }
-  .role-preset-dialog__header > div { @apply min-w-0 flex-1; }
-  .role-preset-dialog__grid { @apply grid grid-cols-2 gap-3; }
-  .role-preset-dialog__field { @apply grid gap-1.5; }
-  .role-preset-dialog__prompt { @apply min-h-40 font-mono; }
-  .role-preset-dialog__error { @apply rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700; }
-
   .role-preset-empty {
     @apply flex min-h-60 flex-col items-center justify-center rounded-lg border border-dashed bg-white/40 text-center;
   }
@@ -314,164 +253,6 @@
   }
 
   .role-preset-empty > span {
-    @apply mt-1 text-xs text-muted-foreground;
-  }
-
-  .workspace-grid {
-    @apply grid grid-cols-3 gap-4;
-  }
-
-  .workspace-card {
-    @apply relative overflow-hidden rounded-lg border bg-card shadow-xs transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-md;
-  }
-
-  .workspace-card > a {
-    @apply block text-inherit no-underline;
-  }
-
-  .workspace-card__preview {
-    @apply relative h-40 overflow-hidden border-b bg-zinc-100;
-    background-image: radial-gradient(circle, rgb(161 161 170 / 32%) 1px, transparent 1px);
-    background-size: 16px 16px;
-  }
-
-  .workspace-card__preview::after {
-    @apply absolute inset-x-0 bottom-0 h-10;
-    content: "";
-    background: linear-gradient(to bottom, transparent, rgb(250 250 250 / 75%));
-  }
-
-  .workspace-card__preview[data-thumbnail="true"]::after {
-    display: none;
-  }
-
-  .workspace-card__preview > img {
-    @apply h-full w-full object-contain;
-  }
-
-  .workspace-card__team {
-    @apply absolute left-[12%] top-[18%] h-[64%] w-[73%] rounded-md border border-dashed border-zinc-400/70 bg-white/45;
-  }
-
-  .workspace-card__team span {
-    @apply absolute left-3 h-1.5 rounded-full bg-zinc-300;
-  }
-
-  .workspace-card__team span:nth-child(1) {
-    @apply top-3 w-12 bg-zinc-500;
-  }
-  .workspace-card__team span:nth-child(2) {
-    @apply top-7 w-7;
-  }
-  .workspace-card__team span:nth-child(3) {
-    @apply right-3 top-3 size-3 rounded-sm;
-    left: auto;
-  }
-
-  .workspace-card__agent {
-    @apply absolute z-10 h-[54px] w-[86px] rounded-md border bg-white p-2 shadow-sm;
-  }
-
-  .workspace-card__agent--one {
-    @apply left-[21%] top-[47%];
-  }
-  .workspace-card__agent--two {
-    @apply right-[20%] top-[36%];
-  }
-
-  .workspace-card__agent span {
-    @apply float-left mr-2 grid size-6 place-items-center rounded-sm text-[8px] font-bold text-white;
-  }
-
-  [data-accent="coral"] .workspace-card__agent span {
-    @apply bg-rose-500;
-  }
-  [data-accent="green"] .workspace-card__agent span {
-    @apply bg-emerald-600;
-  }
-  [data-accent="blue"] .workspace-card__agent span {
-    @apply bg-sky-600;
-  }
-
-  .workspace-card__agent i {
-    @apply mt-1 block h-1.5 rounded-full bg-zinc-200;
-  }
-
-  .workspace-card__agent i:last-child {
-    @apply w-8;
-  }
-
-  .workspace-card__preview svg {
-    @apply absolute inset-0 z-0 h-full w-full fill-none stroke-zinc-400;
-    stroke-width: 1.5;
-    stroke-dasharray: 3 3;
-  }
-
-  .workspace-card__body {
-    @apply p-4;
-  }
-
-  .workspace-card__title {
-    @apply flex items-start justify-between gap-3;
-  }
-
-  .workspace-card__title > svg {
-    @apply mt-0.5 size-4 shrink-0 text-zinc-400 transition-colors group-hover:text-foreground;
-  }
-
-  .workspace-card__title h2 {
-    @apply m-0 text-sm font-semibold;
-  }
-
-  .workspace-card__title p {
-    @apply mb-0 mt-1 truncate text-xs text-muted-foreground;
-  }
-
-  .workspace-card__meta {
-    @apply mt-4 flex items-center gap-3 border-t pt-3 text-[11px] text-muted-foreground;
-  }
-
-  .workspace-card__meta span {
-    @apply flex items-center gap-1;
-  }
-
-  .workspace-card__meta span:last-child {
-    @apply ml-auto;
-  }
-
-  .workspace-card__meta svg {
-    @apply size-3;
-  }
-
-  .workspace-card__menu {
-    @apply absolute right-2 top-2 z-20 border bg-white/90 opacity-0 shadow-xs transition-opacity group-hover:opacity-100;
-  }
-
-  .workspace-card:hover .workspace-card__menu,
-  .workspace-card__menu:focus-visible,
-  .workspace-card__menu[data-open="true"] {
-    @apply opacity-100;
-  }
-
-  .workspace-card[data-busy="true"] {
-    @apply pointer-events-none opacity-60;
-  }
-
-  .new-workspace-card {
-    @apply flex min-h-[274px] flex-col items-center justify-center rounded-lg border border-dashed bg-white/40 text-center text-foreground no-underline transition-colors hover:border-zinc-400 hover:bg-white disabled:pointer-events-none disabled:opacity-60;
-  }
-
-  .new-workspace-card > span {
-    @apply mb-3 grid size-9 place-items-center rounded-md border bg-white shadow-xs;
-  }
-
-  .new-workspace-card svg {
-    @apply size-4;
-  }
-  .new-workspace-card strong {
-    @apply text-sm font-medium;
-  }
-  .new-workspace-card small {
     @apply mt-1 text-xs text-muted-foreground;
   }
 
@@ -1636,44 +1417,13 @@
   }
 }
 
-.home-header [data-slot="sidebar-trigger"] {
-  display: none;
-}
-
 .role-preset-card .role-preset-card__main {
   white-space: normal;
 }
 
-@media (max-width: 767px) {
-  .home-header {
-    @apply justify-between px-3;
-  }
-
-  .home-header__leading {
-    @apply flex;
-  }
-
-  .home-header [data-slot="sidebar-trigger"] {
-    display: inline-flex;
-  }
-
-  .home-brand strong {
-    @apply hidden;
-  }
-
-}
-
 @media (max-width: 640px) {
-  .home-content {
-    @apply px-4 py-7;
-  }
-
   .home-titlebar {
     @apply items-start;
-  }
-
-  .workspace-grid {
-    @apply grid-cols-1;
   }
 
   .home-titlebar--presets {
@@ -1720,14 +1470,6 @@
 }
 
 @media (min-width: 641px) and (max-width: 900px) {
-  .home-content {
-    @apply px-5;
-  }
-
-  .workspace-grid {
-    @apply grid-cols-2;
-  }
-
   .role-preset-grid {
     @apply grid-cols-1;
   }
