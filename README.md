@@ -6,6 +6,32 @@ AgentWeave is a local-first, spatial workspace for running individual AI agents 
 
 > AgentWeave is currently under active development. APIs and persisted data formats may change before the first stable release.
 
+## Product Preview
+
+### Spatial multi-agent canvas
+
+Place agents from different providers on one infinite canvas, keep each conversation independent, and arrange the workspace around the task.
+
+![Multiple AI agents arranged on the AgentWeave canvas](./img/multi-agent-canvas.png)
+
+### Live agent conversations
+
+Work with an agent directly inside a resizable canvas node, including model controls, streamed responses, reasoning, tool calls, and workspace context.
+
+![A live Pi agent conversation with tool-call output](./img/agent-conversation.png)
+
+### Agent Team orchestration
+
+Coordinate a leader and multiple teammates in one team node, while inspecting members, tasks, and activity from the team panel.
+
+![An Agent Team with four independently managed members](./img/agent-team.png)
+
+### Reusable role presets
+
+Create persisted roles with provider-specific instructions, then assign them consistently when building new agent teams.
+
+![The AgentWeave role preset library](./img/role-presets.png)
+
 ## Highlights
 
 - **Spatial canvas**: arrange agents, teams, files, and working context on a persistent tldraw canvas.

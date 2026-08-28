@@ -6,6 +6,32 @@ AgentWeave 是一个本地优先的空间化 AI Agent 工作台，用于运行�
 
 > AgentWeave 目前仍在持续开发，首个稳定版本发布前，API 和持久化数据格式可能发生变化。
 
+## 产品预览
+
+### 空间化多 Agent 画布
+
+在同一张无限画布中放置来自不同 Provider 的 Agent，保持会话相互独立，并围绕任务自由组织工作空间。
+
+![AgentWeave 画布中的多个 AI Agent](./img/multi-agent-canvas.png)
+
+### 实时 Agent 会话
+
+直接在可缩放的画布节点中与 Agent 协作，并使用模型控制、流式回复、思考过程、工具调用和工作区上下文。
+
+![包含工具调用结果的 Pi Agent 实时会话](./img/agent-conversation.png)
+
+### Agent Team 编排
+
+在一个 Team 节点中协调 Leader 和多个成员，同时通过团队面板查看成员、任务和活动状态。
+
+![包含四个独立成员的 Agent Team](./img/agent-team.png)
+
+### 可复用角色预设
+
+创建带有 Provider 和专属指令的持久化角色，在组建新的 Agent Team 时保持角色能力一致。
+
+![AgentWeave 角色预设库](./img/role-presets.png)
+
 ## 核心能力
 
 - **空间化画布**：在持久化的 tldraw 画布上组织 Agent、Agent Team、文件和工作上下文。
