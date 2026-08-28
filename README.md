@@ -6,7 +6,7 @@ AgentWeave is a pnpm monorepo for a spatial multi-agent workspace.
 
 - `packages/web`: React web application and canvas UI
 - `packages/contracts`: shared Zod schemas, request/response DTOs, and Result envelopes
-- `packages/electron`: reserved for the Electron shell
+- `packages/desktop`: Electron shell and macOS/Windows packaging
 - `packages/server`: Express API and the embedded acpx agent communication layer
 
 ## Development
@@ -15,6 +15,25 @@ AgentWeave is a pnpm monorepo for a spatial multi-agent workspace.
 pnpm install
 pnpm dev
 ```
+
+Run the Electron desktop application (it also starts the web and API development servers):
+
+```bash
+pnpm dev:desktop
+```
+
+Build distributable packages under `packages/desktop/release`:
+
+```bash
+pnpm desktop:dist:mac
+pnpm desktop:dist:win
+```
+
+The macOS build produces DMG and ZIP artifacts for Intel and Apple Silicon. The
+Windows build produces x64 NSIS installer and portable EXE artifacts. Production
+desktop builds load the bundled web assets and forward `/api` requests to
+`http://127.0.0.1:3001` by default. Set `AGENT_WEAVE_API_ORIGIN` before launching
+the desktop app to use a different API server.
 
 Start the API separately:
 
