@@ -199,13 +199,45 @@ export function CanvasPage() {
     if (!editor) return
     let active = true
     const historylessDeletes = new Set<TLShapeId>()
+    const pendingMemberDeletes = new Set<string>()
     const unregisterBeforeDelete = editor.sideEffects.registerBeforeDeleteHandler("shape", (shape, source) => {
       if (source === "remote" || isProgrammaticTeamDelete(shape.id) || historylessDeletes.has(shape.id)) return
       const isTeam = shape.type === "agent-team" && Boolean(shape.props.teamId)
       const isMember = shape.type === "agent" && Boolean(shape.props.teamId && shape.props.slotId)
       if (!isTeam && !isMember) return
       if (isMember && editor.getSelectedShapeIds().includes(shape.parentId as TLShapeId)) return false
-      const ids = isTeam ? [shape.id, ...editor.getSortedChildIdsForParent(shape.id)] : [shape.id]
+      if (isMember) {
+        const teamId = shape.props.teamId
+        const slotId = shape.props.slotId
+        const team = teamStore.getState().teams[teamId]?.team
+        if (shape.props.role === "leader" || team?.leaderSlotId === slotId) {
+          setCanvasError("The team leader cannot be removed. Delete the entire team instead.")
+          return false
+        }
+        if (pendingMemberDeletes.has(slotId)) return false
+        pendingMemberDeletes.add(slotId)
+        setCanvasError(undefined)
+        queueMicrotask(() => {
+          void (async () => {
+            try {
+              await teamApi.removeMember(teamId, slotId)
+              if (!active) return
+              try {
+                const refreshedTeam = await teamController.refresh(teamId)
+                if (active && refreshedTeam?.canvasId === canvasId) syncCanvasTeams(editor, [refreshedTeam])
+              } catch {
+                // The Team SSE event will still remove the projection if this refresh fails.
+              }
+            } catch (error) {
+              if (active) setCanvasError(error instanceof Error ? error.message : "Unable to remove the team member.")
+            } finally {
+              pendingMemberDeletes.delete(slotId)
+            }
+          })()
+        })
+        return false
+      }
+      const ids = [shape.id, ...editor.getSortedChildIdsForParent(shape.id)]
       ids.forEach((id) => historylessDeletes.add(id))
       queueMicrotask(() => {
         editor.run(() => editor.deleteShapes(ids), { history: "ignore" })
@@ -263,28 +295,6 @@ export function CanvasPage() {
         return
       }
       if (shape.type !== "agent" || !shape.props.conversationId) return
-      if (shape.props.teamId && shape.props.slotId) {
-        if (!editor.getShape(shape.parentId)) return
-        const teamId = shape.props.teamId
-        const slotId = shape.props.slotId
-        const cachedTeam = teamStore.getState().teams[teamId]?.team
-        void teamApi.removeMember(teamId, slotId).catch(async () => {
-          if (!active) return
-          const restorableTeam = teamStore.getState().teams[teamId]?.team ?? cachedTeam
-          if (restorableTeam?.canvasId === canvasId) syncCanvasTeams(editor, [restorableTeam])
-          try {
-            const team = await teamController.refresh(teamId)
-            if (!active) return
-            if (team?.canvasId === canvasId) syncCanvasTeams(editor, [team])
-          } catch (refreshError) {
-            if (!active || !isNotFound(refreshError)) return
-            teamController.disconnect(teamId)
-            teamStore.getState().remove(teamId)
-            removeTeamProjection(editor, teamId)
-          }
-        })
-        return
-      }
       void conversationController.destroy(shape.props.conversationId).catch(() => undefined)
     })
     return () => {
