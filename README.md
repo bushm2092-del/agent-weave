@@ -1,25 +1,78 @@
 # AgentWeave
 
-AgentWeave is a pnpm monorepo for a spatial multi-agent workspace.
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-## Packages
+AgentWeave is a local-first, spatial workspace for running individual AI agents and coordinating multi-agent teams. It combines a visual canvas, durable conversations, role presets, team orchestration, and an Electron desktop shell in one pnpm monorepo.
 
-- `packages/web`: React web application and canvas UI
-- `packages/contracts`: shared Zod schemas, request/response DTOs, and Result envelopes
-- `packages/desktop`: Electron shell and macOS/Windows packaging
-- `packages/server`: Express API and the embedded acpx agent communication layer
+> AgentWeave is currently under active development. APIs and persisted data formats may change before the first stable release.
 
-## Development
+## Highlights
+
+- **Spatial canvas**: arrange agents, teams, files, and working context on a persistent tldraw canvas.
+- **Live agent conversations**: stream assistant output, reasoning, tools, permissions, and usage updates over SSE.
+- **Durable sessions**: persist conversations, completed content blocks, runs, canvas snapshots, and team state in SQLite.
+- **Agent Teams**: create a leader and teammates with isolated conversations, shared workspace context, tasks, mailbox messages, and approval-controlled spawning.
+- **Role presets**: define reusable roles with provider selection and system prompts, then assign them to team leaders or members.
+- **Local file access**: browse and preview supported files from an agent workspace through a constrained read-only API.
+- **Desktop distribution**: package the web UI and embedded API as macOS or Windows applications.
+
+## Architecture
+
+| Package | Responsibility |
+| --- | --- |
+| `packages/web` | React 19 application, tldraw canvas, conversation UI, and team management |
+| `packages/server` | Express API, SQLite persistence, SSE streams, acpx integration, and team orchestration |
+| `packages/contracts` | Shared Zod schemas, request/response DTOs, events, and domain types |
+| `packages/desktop` | Electron shell and macOS/Windows packaging |
+
+The server communicates with agent runtimes through `acpx`. Team agents also collaborate through an authenticated stdio MCP bridge. Each team member owns an isolated managed conversation while the Team service coordinates runs, tasks, mailbox intents, spawn approvals, and replayable events.
+
+## Requirements
+
+- Node.js 24 or later
+- pnpm 11 (the repository pins the expected version through `packageManager`)
+- An agent provider supported by the local `acpx` installation
+
+## Quick Start
+
+Install dependencies and start the web application and API:
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Run the Electron desktop application (it also starts the web and API development servers):
+The web application is available at `http://localhost:5173` by default.
+
+To start only one side:
+
+```bash
+pnpm dev:web
+pnpm dev:server
+```
+
+To run the Electron application, including its development web and API servers:
 
 ```bash
 pnpm dev:desktop
+```
+
+## Configuration
+
+Copy the server environment example before overriding defaults:
+
+```bash
+cp packages/server/.env.example packages/server/.env
+```
+
+The server configuration covers the host, port, allowed CORS origins, SQLite database path, acpx state directory, and turn timeout. Desktop production builds use the platform user-data directory by default. Set `AGENT_WEAVE_API_ORIGIN` before launching the desktop application to connect it to an external API server.
+
+## Desktop Builds
+
+Create unpacked application output:
+
+```bash
+pnpm desktop:pack
 ```
 
 Build distributable packages under `packages/desktop/release`:
@@ -29,77 +82,23 @@ pnpm desktop:dist:mac
 pnpm desktop:dist:win
 ```
 
-The macOS build produces DMG and ZIP artifacts for Intel and Apple Silicon. The
-Windows build produces x64 NSIS installer and portable EXE artifacts. Production
-desktop builds load the bundled web assets and forward `/api` requests to
-`http://127.0.0.1:3001` by default. Set `AGENT_WEAVE_API_ORIGIN` before launching
-the desktop app to use a different API server.
+The macOS build produces DMG and ZIP artifacts for Intel and Apple Silicon. The Windows build produces an x64 NSIS installer and portable executable.
 
-Start the API separately:
+## Main APIs
 
-```bash
-pnpm dev:server
-```
+The API is mounted under `/api/v1` and includes:
 
-The conversation API is asynchronous and streams persisted events over SSE:
+- `/canvases`: canvas metadata and persistent snapshots
+- `/conversations`: conversations, runs, permissions, configuration, and SSE events
+- `/teams`: members, messages, runs, tasks, approvals, and team event streams
+- `/role-presets`: reusable agent roles and system prompts
+- `/files`: constrained read-only directory, text, and image access
 
-```text
-POST   /api/v1/conversations
-GET    /api/v1/conversations/:conversationId
-DELETE /api/v1/conversations/:conversationId
-GET    /api/v1/conversations/:conversationId/events
-GET    /api/v1/conversations/:conversationId/runs
-POST   /api/v1/conversations/:conversationId/runs
-POST   /api/v1/conversations/:conversationId/runs/:runId/cancel
-POST   /api/v1/conversations/:conversationId/runs/:runId/permissions/:permissionId
-PATCH  /api/v1/conversations/:conversationId/config-options/:configId
-```
+Conversation and Team event streams support sequence cursors for reconnecting clients. Live content deltas are delivered as transient SSE events, while completed run content is stored as full blocks for efficient reloads.
 
-The read-only file API accepts absolute local paths:
+## Quality Checks
 
-```text
-GET    /api/v1/files/list?path=/absolute/directory
-GET    /api/v1/files/read?path=/absolute/file
-GET    /api/v1/files/raw?path=/absolute/image
-```
-
-Directory reads return one level at a time, text reads accept UTF-8 files up to
-2 MiB, and raw reads stream supported images up to 20 MiB.
-
-Agent Teams are durable backend entities projected onto the canvas. Each member
-owns an isolated managed Conversation, while Team runs, mailbox intents, tasks,
-spawn approvals, and replayable events are coordinated by the Team service:
-
-```text
-POST   /api/v1/teams
-GET    /api/v1/teams?canvasId=:canvasId
-GET    /api/v1/teams/:teamId
-PATCH  /api/v1/teams/:teamId
-DELETE /api/v1/teams/:teamId
-POST   /api/v1/teams/:teamId/messages
-POST   /api/v1/teams/:teamId/members
-DELETE /api/v1/teams/:teamId/members/:slotId
-POST   /api/v1/teams/:teamId/members/:slotId/messages
-GET    /api/v1/teams/:teamId/runs
-POST   /api/v1/teams/:teamId/runs/:runId/cancel
-GET    /api/v1/teams/:teamId/events?after=:sequence
-```
-
-Agents collaborate through an authenticated stdio MCP bridge. A leader's
-`team_spawn_agent` call creates a pending request; only an explicit approval in
-the Team Inspector provisions the new member runtime. Host-side Team mutations
-use a per-Team control capability returned at creation; only its hash is stored
-by the server, and it is never passed to member runtimes.
-
-The detailed product flow and implementation boundaries are documented in
-`docs/agent-team-product-interaction.md` and `docs/agent-team-code-architecture.md`.
-
-ACP session configuration and permission options are forwarded dynamically; the
-server does not maintain static model, reasoning, mode, or permission catalogs.
-Copy `packages/server/.env.example` to `packages/server/.env` when overriding the
-default host, port, CORS origins, SQLite path, acpx state directory, or turn timeout.
-
-Run all checks from the repository root:
+Run all repository checks from the project root:
 
 ```bash
 pnpm typecheck
@@ -107,3 +106,12 @@ pnpm lint
 pnpm test
 pnpm build
 ```
+
+## Documentation
+
+- [`docs/agent-team-product-interaction.md`](docs/agent-team-product-interaction.md): Agent Team product flows
+- [`docs/agent-team-code-architecture.md`](docs/agent-team-code-architecture.md): Agent Team implementation boundaries
+
+## License
+
+No license has been declared yet. Until one is added, all rights are reserved by the repository owner.
