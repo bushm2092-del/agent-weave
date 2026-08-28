@@ -12,7 +12,7 @@ type CanvasRow = {
   updated_at: string
 }
 
-type SnapshotRow = { snapshot_json: string; updated_at: string }
+type SnapshotRow = { snapshot_json: string; thumbnail_data_url: string | null; updated_at: string }
 
 export class SqliteCanvasRepository implements CanvasRepository {
   private readonly insertCanvas: StatementSync
@@ -34,11 +34,16 @@ export class SqliteCanvasRepository implements CanvasRepository {
     this.selectCanvas = database.prepare("SELECT * FROM canvases WHERE id = ?")
     this.selectCanvases = database.prepare("SELECT * FROM canvases ORDER BY updated_at DESC")
     this.deleteCanvasStatement = database.prepare("DELETE FROM canvases WHERE id = ?")
-    this.selectSnapshot = database.prepare("SELECT snapshot_json, updated_at FROM canvas_snapshots WHERE canvas_id = ?")
+    this.selectSnapshot = database.prepare(
+      "SELECT snapshot_json, thumbnail_data_url, updated_at FROM canvas_snapshots WHERE canvas_id = ?",
+    )
     this.upsertSnapshot = database.prepare(`
-      INSERT INTO canvas_snapshots (canvas_id, snapshot_json, updated_at)
-      VALUES (?, ?, ?)
-      ON CONFLICT(canvas_id) DO UPDATE SET snapshot_json = excluded.snapshot_json, updated_at = excluded.updated_at
+      INSERT INTO canvas_snapshots (canvas_id, snapshot_json, thumbnail_data_url, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(canvas_id) DO UPDATE SET
+        snapshot_json = excluded.snapshot_json,
+        thumbnail_data_url = excluded.thumbnail_data_url,
+        updated_at = excluded.updated_at
     `)
     if (options.seedLegacyCanvases) this.seedLegacyCanvases()
   }
@@ -73,13 +78,15 @@ export class SqliteCanvasRepository implements CanvasRepository {
     return this.deleteCanvasStatement.run(canvasId).changes > 0
   }
 
-  getSnapshot(canvasId: string): { document: unknown; updatedAt: string } | undefined {
+  getSnapshot(canvasId: string): { document: unknown; thumbnailDataUrl: string | null; updatedAt: string } | undefined {
     const row = this.selectSnapshot.get(canvasId) as SnapshotRow | undefined
-    return row ? { document: JSON.parse(row.snapshot_json), updatedAt: row.updated_at } : undefined
+    return row
+      ? { document: JSON.parse(row.snapshot_json), thumbnailDataUrl: row.thumbnail_data_url, updatedAt: row.updated_at }
+      : undefined
   }
 
-  saveSnapshot(canvasId: string, document: unknown, updatedAt: string): void {
-    this.upsertSnapshot.run(canvasId, JSON.stringify(document), updatedAt)
+  saveSnapshot(canvasId: string, document: unknown, thumbnailDataUrl: string | null, updatedAt: string): void {
+    this.upsertSnapshot.run(canvasId, JSON.stringify(document), thumbnailDataUrl, updatedAt)
     this.database.prepare("UPDATE canvases SET updated_at = ? WHERE id = ?").run(updatedAt, canvasId)
   }
 
@@ -97,6 +104,7 @@ export class SqliteCanvasRepository implements CanvasRepository {
       CREATE TABLE IF NOT EXISTS canvas_snapshots (
         canvas_id TEXT PRIMARY KEY REFERENCES canvases(id) ON DELETE CASCADE,
         snapshot_json TEXT NOT NULL,
+        thumbnail_data_url TEXT,
         updated_at TEXT NOT NULL
       );
 
@@ -107,6 +115,7 @@ export class SqliteCanvasRepository implements CanvasRepository {
         applied_at TEXT NOT NULL
       );
     `)
+    ensureColumn(this.database, "canvas_snapshots", "thumbnail_data_url", "TEXT")
   }
 
   private seedLegacyCanvases(): void {
@@ -158,6 +167,11 @@ export class SqliteCanvasRepository implements CanvasRepository {
       throw error
     }
   }
+}
+
+function ensureColumn(database: DatabaseSync, table: string, column: string, definition: string): void {
+  const columns = database.prepare(`PRAGMA table_info(${table})`).all() as Array<Record<string, unknown>>
+  if (!columns.some((item) => item.name === column)) database.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)
 }
 
 function mapCanvas(row: CanvasRow | undefined): StoredCanvas | undefined {

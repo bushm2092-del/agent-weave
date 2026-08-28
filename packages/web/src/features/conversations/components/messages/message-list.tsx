@@ -26,6 +26,7 @@ export function MessageList({ conversationId, view }: { conversationId: string; 
           conversationId={conversationId}
           key={run.id}
           permissions={Object.values(view.pendingPermissions).filter((item) => item.runId === run.id)}
+          parts={view.partsByRun[run.id] ?? []}
           run={run}
           tools={view.toolsByRun[run.id] ?? []}
         />

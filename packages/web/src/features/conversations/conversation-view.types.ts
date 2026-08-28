@@ -21,10 +21,17 @@ export type PendingPermission = {
   options: PermissionOption[]
 }
 
+export type RunRenderPart =
+  | { id: string; type: "markdown"; content: string }
+  | { id: string; type: "thought"; content: string }
+  | { id: string; type: "tool"; toolId: string }
+  | { id: string; type: "permission"; permissionId: string }
+
 export type ConversationView = {
   conversation?: Conversation
   runs: Run[]
   toolsByRun: Record<string, ToolActivity[]>
+  partsByRun: Record<string, RunRenderPart[]>
   pendingPermissions: Record<string, PendingPermission>
   lastSequence: number
   connectionStatus: ConversationConnectionStatus

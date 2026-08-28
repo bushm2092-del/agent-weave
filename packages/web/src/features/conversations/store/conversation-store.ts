@@ -20,6 +20,7 @@ function emptyView(): ConversationView {
   return {
     runs: [],
     toolsByRun: {},
+    partsByRun: {},
     pendingPermissions: {},
     lastSequence: 0,
     connectionStatus: "idle",

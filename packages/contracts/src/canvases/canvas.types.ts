@@ -9,6 +9,7 @@ export const canvasSummarySchema = z.object({
   accent: canvasAccentSchema,
   agents: z.number().int().nonnegative(),
   teams: z.number().int().nonnegative(),
+  thumbnailDataUrl: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })
@@ -16,6 +17,7 @@ export const canvasSummarySchema = z.object({
 export const canvasSnapshotSchema = z.object({
   canvasId: z.string(),
   document: z.unknown().nullable(),
+  thumbnailDataUrl: z.string().nullable(),
   updatedAt: z.string().nullable(),
 })
 

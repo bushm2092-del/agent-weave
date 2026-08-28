@@ -17,6 +17,7 @@ export const updateCanvasRequestSchema = z
 
 export const saveCanvasSnapshotRequestSchema = z.object({
   document: z.unknown(),
+  thumbnailDataUrl: z.string().startsWith("data:image/webp;base64,").max(1_000_000).nullable().optional(),
 })
 
 export type CreateCanvasRequest = z.infer<typeof createCanvasRequestSchema>

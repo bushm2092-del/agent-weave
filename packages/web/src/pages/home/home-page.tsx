@@ -2,20 +2,15 @@ import type { CanvasSummary, CreateRolePresetRequest, RolePreset } from "@agent-
 import {
   ArrowUpRight,
   Bot,
-  BrainCircuit,
   ChevronRight,
   Clock3,
   Copy,
   LayoutDashboard,
-  Menu,
   MoreHorizontal,
-  PanelLeftClose,
-  PanelLeftOpen,
   Pencil,
   Plus,
   Search,
   Sparkles,
-  SquarePen,
   Trash2,
   UserRound,
   Users,
@@ -24,11 +19,85 @@ import { useEffect, useState } from "react"
 import type { CSSProperties } from "react"
 import { Link, useNavigate } from 'react-router'
 
+import aiEngineerAvatar from '@/assets/assistant/ai-engineer.png'
+import dataAnalystAvatar from '@/assets/assistant/data-analyst.png'
+import devopsEngineerAvatar from '@/assets/assistant/devops-engineer.png'
+import productManagerAvatar from '@/assets/assistant/product-manager.png'
+import projectManagerAvatar from '@/assets/assistant/project-manager.png'
+import uiDesignerAvatar from '@/assets/assistant/ui-designer.png'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar'
 import { canvasController, useCanvasStore } from "@/features/canvases"
 import { rolePresetApi, RolePresetDialog } from "@/features/role-presets"
 
 type HomeSection = "canvases" | "presets"
+
+function HomeSidebar({
+  activeSection,
+  canvasCount,
+  onSelect,
+}: {
+  activeSection: HomeSection
+  canvasCount: number
+  onSelect: (section: HomeSection) => void
+}) {
+  const { setOpenMobile } = useSidebar()
+  const select = (section: HomeSection) => {
+    onSelect(section)
+    setOpenMobile(false)
+  }
+
+  return (
+    <Sidebar className="home-sidebar" collapsible="icon">
+      <SidebarHeader className="home-sidebar__header">
+        <Link className="home-sidebar__brand" to="/" aria-label="AgentWeave home">
+          <img src="/icon.png" alt="" />
+          <span><strong>AgentWeave</strong><small>Agent teamwork</small></span>
+        </Link>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup className="home-nav">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeSection === "canvases"} size="lg" tooltip="Your canvases" onClick={() => select("canvases")}>
+                  <LayoutDashboard /><span>Your canvases</span>
+                </SidebarMenuButton>
+                <SidebarMenuBadge>{canvasCount}</SidebarMenuBadge>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeSection === "presets"} size="lg" tooltip="Role presets" onClick={() => select("presets")}>
+                  <Sparkles /><span>Role presets</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  )
+}
 
 function WorkspacePreview({ workspace }: { workspace: CanvasSummary }) {
   return (
@@ -60,12 +129,9 @@ export function HomePage() {
   const loading = useCanvasStore((state) => state.loading)
   const error = useCanvasStore((state) => state.error)
   const [creating, setCreating] = useState(false)
-  const [openMenuId, setOpenMenuId] = useState<string>()
   const [busyCanvasId, setBusyCanvasId] = useState<string>()
   const [actionError, setActionError] = useState<string>()
   const [activeSection, setActiveSection] = useState<HomeSection>("canvases")
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [presetQuery, setPresetQuery] = useState("")
   const [rolePresets, setRolePresets] = useState<RolePreset[]>([])
   const [presetsLoading, setPresetsLoading] = useState(true)
@@ -77,21 +143,6 @@ export function HomePage() {
     void rolePresetApi.list().then(setRolePresets).catch((loadError: unknown) => {
       setPresetError(loadError instanceof Error ? loadError.message : "Unable to load role presets.")
     }).finally(() => setPresetsLoading(false))
-  }, [])
-
-  useEffect(() => {
-    const closeMenu = (event: PointerEvent) => {
-      if (!(event.target instanceof Element) || !event.target.closest("[data-canvas-menu]")) setOpenMenuId(undefined)
-    }
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpenMenuId(undefined)
-    }
-    document.addEventListener("pointerdown", closeMenu)
-    document.addEventListener("keydown", closeOnEscape)
-    return () => {
-      document.removeEventListener("pointerdown", closeMenu)
-      document.removeEventListener("keydown", closeOnEscape)
-    }
   }, [])
 
   const createCanvas = async () => {
@@ -106,7 +157,6 @@ export function HomePage() {
   }
 
   const runCanvasAction = async (canvasId: string, action: () => Promise<void>) => {
-    setOpenMenuId(undefined)
     setBusyCanvasId(canvasId)
     setActionError(undefined)
     try {
@@ -141,7 +191,6 @@ export function HomePage() {
 
   const selectSection = (section: HomeSection) => {
     setActiveSection(section)
-    setSidebarOpen(false)
   }
 
   const visiblePresets = rolePresets.filter((preset) => {
@@ -172,33 +221,12 @@ export function HomePage() {
   }
 
   return (
-    <main className="home-page" data-sidebar-collapsed={sidebarCollapsed}>
-      <div className="home-shell">
-        <button className="home-sidebar__scrim" data-open={sidebarOpen} style={{ opacity: sidebarOpen ? 1 : 0, pointerEvents: sidebarOpen ? "auto" : "none" }} type="button" aria-label="Close navigation" onClick={() => setSidebarOpen(false)} />
-        <aside className="home-sidebar" data-open={sidebarOpen} style={{ "--home-sidebar-translate": sidebarOpen ? "0%" : "-100%" } as CSSProperties} aria-label="Main navigation">
-          <div className="home-sidebar__header">
-            <Link className="home-sidebar__brand" to="/" aria-label="AgentWeave home">
-              <img src="/icon.png" alt="" />
-              <span><strong>AgentWeave</strong><small>Agent teamwork</small></span>
-            </Link>
-            <Button className="home-sidebar__collapse" size="icon-sm" variant="ghost" aria-label={sidebarCollapsed ? "Expand navigation" : "Collapse navigation"} onClick={() => setSidebarCollapsed((value) => !value)}>
-              {sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-            </Button>
-          </div>
-          <nav className="home-nav">
-            <button title="Your canvases" data-active={activeSection === "canvases"} type="button" onClick={() => selectSection("canvases")}>
-              <LayoutDashboard /><span>Your canvases</span><small>{canvases.length}</small>
-            </button>
-            <button title="Role presets" data-active={activeSection === "presets"} type="button" onClick={() => selectSection("presets")}>
-              <Sparkles /><span>Role presets</span><ChevronRight />
-            </button>
-          </nav>
-        </aside>
-
-        <div className="home-main">
+    <SidebarProvider className="home-page" style={{ "--sidebar-width": "244px", "--sidebar-width-icon": "76px", "--sidebar-width-mobile": "280px" } as CSSProperties}>
+        <HomeSidebar activeSection={activeSection} canvasCount={canvases.length} onSelect={selectSection} />
+        <SidebarInset className="home-main">
           <header className="home-header">
             <div className="home-header__leading">
-              <Button className="home-sidebar-trigger" size="icon" variant="ghost" aria-label="Open navigation" onClick={() => setSidebarOpen(true)}><Menu /></Button>
+              <SidebarTrigger className="home-sidebar-trigger" />
               <Link className="home-brand" to="/" aria-label="AgentWeave home">
                 <img src="/icon.png" alt="" />
                 <strong>AgentWeave</strong>
@@ -238,52 +266,43 @@ export function HomePage() {
                   </div>
                 </div>
               </Link>
-              <Button
-                className="workspace-card__menu"
-                data-canvas-menu
-                data-open={openMenuId === workspace.id}
-                size="icon-sm"
-                variant="ghost"
-                aria-expanded={openMenuId === workspace.id}
-                aria-haspopup="menu"
-                aria-label={`More options for ${workspace.name}`}
-                disabled={busyCanvasId === workspace.id}
-                onClick={() => setOpenMenuId((current) => current === workspace.id ? undefined : workspace.id)}
-              >
-                <MoreHorizontal />
-              </Button>
-              {openMenuId === workspace.id && (
-                <div className="workspace-card__menu-popover" data-canvas-menu role="menu">
-                  <button type="button" role="menuitem" onClick={() => renameCanvas(workspace)}><Pencil />Rename</button>
-                  <button type="button" role="menuitem" onClick={() => duplicateCanvas(workspace)}><Copy />Duplicate</button>
-                  <button className="workspace-card__menu-danger" type="button" role="menuitem" onClick={() => deleteCanvas(workspace)}><Trash2 />Delete</button>
-                </div>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="workspace-card__menu" size="icon-sm" variant="outline" aria-label={`More options for ${workspace.name}`} disabled={busyCanvasId === workspace.id}>
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-36">
+                  <DropdownMenuItem onSelect={() => renameCanvas(workspace)}><Pencil />Rename</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => duplicateCanvas(workspace)}><Copy />Duplicate</DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive" onSelect={() => deleteCanvas(workspace)}><Trash2 />Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </article>
           ))}
 
-          <button className="new-workspace-card" type="button" disabled={creating} onClick={() => void createCanvas()}>
+          <Button className="new-workspace-card" type="button" variant="outline" disabled={creating} onClick={() => void createCanvas()}>
             <span><Plus /></span><strong>{creating ? "Creating…" : "New canvas"}</strong><small>Start with an empty workspace</small>
-          </button>
+          </Button>
               </div>
             </>
           ) : (
             <>
               <div className="home-titlebar home-titlebar--presets">
                 <div><p>Library</p><h1>Role presets</h1><small>Persisted roles inject real instructions into team agents.</small></div>
-                <div className="role-preset-toolbar"><label className="role-preset-search"><Search /><input value={presetQuery} onChange={(event) => setPresetQuery(event.target.value)} placeholder="Search roles" aria-label="Search role presets" /></label><Button onClick={() => setPresetDialog("new")}><Plus />New role</Button></div>
+                <div className="role-preset-toolbar"><label className="role-preset-search"><Search /><Input value={presetQuery} onChange={(event) => setPresetQuery(event.target.value)} placeholder="Search roles" aria-label="Search role presets" /></label><Button onClick={() => setPresetDialog("new")}><Plus />New role</Button></div>
               </div>
               {presetError && <p className="home-content__error">{presetError}</p>}
               <div className="role-preset-grid" aria-busy={presetsLoading}>
                 {visiblePresets.map((preset) => {
-                  const { Icon, tone } = presetAppearance(preset.category)
+                  const avatar = presetAvatar(preset)
                   return (
                     <article className="role-preset-card" key={preset.id}>
-                      <button className="role-preset-card__main" type="button" onClick={() => setPresetDialog(preset)}>
-                        <span className="role-preset-card__icon" data-tone={tone}><Icon /></span>
+                      <Button className="role-preset-card__main" type="button" variant="ghost" onClick={() => setPresetDialog(preset)}>
+                        <img className="role-preset-card__avatar" src={avatar} alt="" />
                         <span className="role-preset-card__content"><small>{preset.category} · {preset.agent}</small><strong>{preset.name}</strong><span>{preset.description}</span></span>
                         <ChevronRight />
-                      </button>
+                      </Button>
                       <div className="role-preset-card__actions"><Button size="icon-xs" variant="ghost" aria-label={`Edit ${preset.name}`} onClick={() => setPresetDialog(preset)}><Pencil /></Button>{!preset.builtIn && <Button size="icon-xs" variant="ghost" aria-label={`Delete ${preset.name}`} onClick={() => void deletePreset(preset)}><Trash2 /></Button>}</div>
                     </article>
                   )
@@ -293,19 +312,20 @@ export function HomePage() {
             </>
           )}
           </section>
-        </div>
-      </div>
+        </SidebarInset>
       {presetDialog && <RolePresetDialog preset={presetDialog === "new" ? undefined : presetDialog} onClose={() => setPresetDialog(undefined)} onSave={savePreset} />}
-    </main>
+    </SidebarProvider>
   )
 }
 
-function presetAppearance(category: string) {
-  const normalized = category.toLowerCase()
-  if (normalized.includes("research")) return { Icon: Search, tone: "blue" }
-  if (normalized.includes("plan") || normalized.includes("product")) return { Icon: LayoutDashboard, tone: "amber" }
-  if (normalized.includes("create") || normalized.includes("write")) return { Icon: SquarePen, tone: "rose" }
-  return { Icon: BrainCircuit, tone: "green" }
+function presetAvatar(preset: RolePreset): string {
+  const identity = `${preset.name} ${preset.category}`.toLowerCase()
+  if (identity.includes("product")) return productManagerAvatar
+  if (identity.includes("project") || identity.includes("plan")) return projectManagerAvatar
+  if (identity.includes("design") || identity.includes("content") || identity.includes("write") || identity.includes("create")) return uiDesignerAvatar
+  if (identity.includes("devops") || identity.includes("infrastructure") || identity.includes("cloud") || identity.includes("operation")) return devopsEngineerAvatar
+  if (identity.includes("data") || identity.includes("research") || identity.includes("analyst")) return dataAnalystAvatar
+  return aiEngineerAvatar
 }
 
 function formatUpdatedAt(value: string): string {

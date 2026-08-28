@@ -25,6 +25,7 @@ describe("canvas router", () => {
       .send({ name: "HTTP canvas", description: "Stored in SQLite", accent: "orange" })
       .expect(201)
     const canvasId = String(created.body.data.id)
+    const thumbnailDataUrl = "data:image/webp;base64,UklGRg=="
     assert.equal(created.body.data.name, "HTTP canvas")
     assert.equal(created.body.data.agents, 0)
 
@@ -38,15 +39,18 @@ describe("canvas router", () => {
           },
           schema: { schemaVersion: 2, sequences: {} },
         },
+        thumbnailDataUrl,
       })
       .expect(200)
 
     const listed = await request(app).get("/api/v1/canvases").expect(200)
     assert.equal(listed.body.data.length, 1)
     assert.equal(listed.body.data[0].agents, 1)
+    assert.equal(listed.body.data[0].thumbnailDataUrl, thumbnailDataUrl)
 
     const snapshot = await request(app).get(`/api/v1/canvases/${canvasId}/snapshot`).expect(200)
     assert.equal(snapshot.body.data.document.store["shape:agent"].type, "agent")
+    assert.equal(snapshot.body.data.thumbnailDataUrl, thumbnailDataUrl)
 
     const updated = await request(app)
       .patch(`/api/v1/canvases/${canvasId}`)

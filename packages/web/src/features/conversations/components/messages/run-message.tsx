@@ -1,93 +1,90 @@
 import type { Run } from "@agent-weave/contracts"
-import { AlertCircle, Brain, Clock3, Image, Paperclip } from "lucide-react"
 
-import { PermissionRequest } from "@/features/conversations/components/permissions/permission-request"
-import { ToolCallItem } from "@/features/conversations/components/messages/tool-call-item"
-import type { PendingPermission, ToolActivity } from "@/features/conversations/conversation-view.types"
+import { MessageRender, type MessageRenderPart } from "@/features/conversations/components/messages/message-render"
+import type { PendingPermission, RunRenderPart, ToolActivity } from "@/features/conversations/conversation-view.types"
 
 export function RunMessage({
   conversationId,
   run,
   tools,
   permissions,
+  parts,
 }: {
   conversationId: string
   run: Run
   tools: ToolActivity[]
   permissions: PendingPermission[]
+  parts: RunRenderPart[]
 }) {
+  const assistantParts = buildAssistantParts(run, parts, tools, permissions)
   return (
     <article className="conversation-run">
-      <div className="conversation-message conversation-message--user">
-        <p>{run.message}</p>
-        {!!run.attachments.length && (
-          <div className="conversation-message__attachments">
-            {run.attachments.map((attachment, index) => (
-              <span key={`${attachment.type}-${index}`}>
-                {attachment.type === "image" ? <Image /> : <Paperclip />}
-                {attachment.type === "image" ? attachment.name || "Image" : attachment.path}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      <MessageRender
+        message={{ id: `${run.id}-user`, role: "user", content: run.message, attachments: run.attachments }}
+      />
 
-      {!!run.thoughtText && (
-        <details className="thought-section">
-          <summary>
-            <Brain aria-hidden="true" />
-            Thought process
-          </summary>
-          <p>{run.thoughtText}</p>
-        </details>
-      )}
-
-      {!!tools.length && (
-        <div className="tool-call-list">
-          {tools.map((tool) => (
-            <ToolCallItem key={tool.id} tool={tool} />
-          ))}
-        </div>
-      )}
-
-      {permissions.map((permission) => (
-        <PermissionRequest conversationId={conversationId} key={permission.id} permission={permission} />
-      ))}
-
-      <div className="conversation-message conversation-message--assistant">
-        {run.assistantText ? (
-          <p>{run.assistantText}</p>
-        ) : run.status === "failed" ? (
-          <p className="conversation-message__error">
-            <AlertCircle />
-            {run.error || "The run failed."}
-          </p>
-        ) : run.status === "cancelled" ? (
-          <p className="conversation-message__muted">Run stopped</p>
-        ) : (
-          <p className="conversation-message__working">
-            <CircleLoader />
-            {run.status === "queued" ? "Queued" : "Working"}
-          </p>
-        )}
-        {run.usage && <UsageSummary run={run} />}
-      </div>
+      <MessageRender
+        conversationId={conversationId}
+        message={{
+          id: `${run.id}-assistant`,
+          role: "assistant",
+          parts: assistantParts,
+          status: run.status,
+          error: run.error,
+          usage: run.usage,
+        }}
+      />
     </article>
   )
 }
 
-function UsageSummary({ run }: { run: Run }) {
-  const usage = run.usage
-  if (!usage) return null
-  const total = usage.totalTokens ?? (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
-  return (
-    <span className="usage-summary" title={`Input ${usage.inputTokens ?? 0}, output ${usage.outputTokens ?? 0}`}>
-      <Clock3 />
-      {total.toLocaleString()} tokens
-    </span>
-  )
+function buildAssistantParts(
+  run: Run,
+  timeline: RunRenderPart[],
+  tools: ToolActivity[],
+  permissions: PendingPermission[],
+): MessageRenderPart[] {
+  const toolById = new Map(tools.map((tool) => [tool.id, tool]))
+  const permissionById = new Map(permissions.map((permission) => [permission.id, permission]))
+  const parts: MessageRenderPart[] = []
+  for (const part of timeline) {
+    if (part.type === "tool") {
+      const tool = toolById.get(part.toolId)
+      if (tool) parts.push({ id: part.id, type: "tool", tool })
+    } else if (part.type === "permission") {
+      const permission = permissionById.get(part.permissionId)
+      if (permission) parts.push({ id: part.id, type: "permission", permission })
+    } else parts.push(part)
+  }
+
+  if (!timeline.length) {
+    if (run.thoughtText) parts.push({ id: `${run.id}-thought`, type: "thought", content: run.thoughtText })
+    parts.push(...tools.map((tool) => ({ id: `${run.id}-tool-${tool.id}`, type: "tool" as const, tool })))
+    parts.push(
+      ...permissions.map((permission) => ({
+        id: `${run.id}-permission-${permission.id}`,
+        type: "permission" as const,
+        permission,
+      })),
+    )
+  }
+
+  appendMissingText(parts, "thought", run.thoughtText, `${run.id}-thought-rest`)
+  appendMissingText(parts, "markdown", run.assistantText, `${run.id}-assistant-rest`)
+  return parts
 }
 
-function CircleLoader() {
-  return <span className="conversation-loader" aria-hidden="true" />
+function appendMissingText(
+  parts: MessageRenderPart[],
+  type: "markdown" | "thought",
+  completeText: string,
+  id: string,
+) {
+  if (!completeText) return
+  const rendered = parts
+    .map((part) => (part.type === type ? part.content : ""))
+    .join("")
+  if (rendered === completeText) return
+  const missing = completeText.startsWith(rendered) ? completeText.slice(rendered.length) : completeText
+  if (missing) parts.push({ id, type, content: missing })
 }

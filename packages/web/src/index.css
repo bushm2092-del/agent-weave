@@ -2,7 +2,14 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
-
+@import "streamdown/styles.css";
+@import "katex/dist/katex.min.css";
+@import "./components/markdown/streamdown.css";
+@source "../node_modules/streamdown/dist/*.js";
+@source "../node_modules/@streamdown/code/dist/*.js";
+@source "../node_modules/@streamdown/cjk/dist/*.js";
+@source "../node_modules/@streamdown/math/dist/*.js";
+@source "../node_modules/@streamdown/mermaid/dist/*.js";
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -52,6 +59,12 @@
   --border: var(--mio-border-default);
   --input: var(--mio-border-control);
   --ring: var(--mio-brand);
+  --sidebar: var(--mio-navigation);
+  --sidebar-foreground: var(--mio-text-primary);
+  --sidebar-accent: var(--mio-canvas);
+  --sidebar-accent-foreground: var(--mio-text-primary);
+  --sidebar-border: var(--mio-border-default);
+  --sidebar-ring: var(--mio-brand);
   --radius: 0.5rem;
 }
 
@@ -74,6 +87,12 @@
   --border: rgb(255 255 255 / 10%);
   --input: rgb(255 255 255 / 16%);
   --ring: var(--mio-brand);
+  --sidebar: #242424;
+  --sidebar-foreground: rgb(255 255 255 / 88%);
+  --sidebar-accent: #303030;
+  --sidebar-accent-foreground: rgb(255 255 255 / 88%);
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: var(--mio-brand);
 }
 
 @theme inline {
@@ -96,6 +115,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--mio-success);
   --color-warning: var(--mio-warning);
   --color-info: var(--mio-info);
@@ -158,28 +183,16 @@
     @apply flex items-center gap-2;
   }
 
-  .home-shell {
-    @apply grid min-h-dvh grid-cols-[244px_minmax(0,1fr)] transition-[grid-template-columns] duration-200;
-  }
-
-  .home-page[data-sidebar-collapsed="true"] .home-shell {
-    grid-template-columns: 76px minmax(0, 1fr);
-  }
-
   .home-main {
-    @apply min-w-0;
+    @apply min-h-dvh min-w-0;
   }
 
   .home-sidebar {
-    @apply sticky top-0 flex h-dvh flex-col overflow-hidden border-r bg-zinc-100 px-3 py-5;
-  }
-
-  .home-sidebar__scrim {
-    @apply hidden;
+    @apply bg-zinc-100;
   }
 
   .home-sidebar__header {
-    @apply mb-10 flex h-11 shrink-0 items-center gap-2 px-1;
+    @apply mb-8 h-20 flex-row items-center gap-2 px-4;
   }
 
   .home-sidebar__brand {
@@ -207,58 +220,28 @@
     @apply text-[9px] uppercase text-muted-foreground;
   }
 
-  .home-sidebar__collapse {
-    @apply shrink-0 text-zinc-500;
-  }
-
   .home-nav {
-    @apply grid gap-1;
-  }
-
-  .home-nav > button {
-    @apply flex h-12 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-zinc-600 transition-colors hover:bg-white/60 hover:text-foreground;
-  }
-
-  .home-nav > button[data-active="true"] {
-    @apply bg-white text-primary shadow-xs;
-  }
-
-  .home-nav > button > svg {
-    @apply size-5 shrink-0;
-  }
-
-  .home-nav > button > span {
-    @apply min-w-0 flex-1;
-  }
-
-  .home-nav > button > small {
-    @apply text-[10px] font-normal text-zinc-400;
-  }
-
-  .home-nav > button > svg:last-child:not(:first-child) {
-    @apply size-3.5 text-zinc-400;
-  }
-
-  .home-page[data-sidebar-collapsed="true"] .home-sidebar {
     @apply px-3;
   }
 
-  .home-page[data-sidebar-collapsed="true"] .home-sidebar__header {
-    @apply justify-center px-0;
+  .home-nav [data-sidebar="menu"] {
+    @apply gap-1;
   }
 
-  .home-page[data-sidebar-collapsed="true"] .home-sidebar__brand {
-    @apply hidden;
+  .home-nav [data-sidebar="menu-button"] {
+    @apply h-12 gap-3 rounded-lg px-3 text-sm text-zinc-600 hover:bg-white/60 hover:text-foreground;
   }
 
-  .home-page[data-sidebar-collapsed="true"] .home-nav > button {
-    @apply justify-center px-0;
+  .home-nav [data-sidebar="menu-button"] > svg {
+    @apply size-5 shrink-0;
   }
 
-  .home-page[data-sidebar-collapsed="true"] .home-nav > button > span,
-  .home-page[data-sidebar-collapsed="true"] .home-nav > button > small,
-  .home-page[data-sidebar-collapsed="true"] .home-nav > button > svg:last-child:not(:first-child) {
-    @apply hidden;
+  .home-nav [data-sidebar="menu-button"][data-active="true"] {
+    @apply bg-white text-primary shadow-xs;
+  }
+
+  .home-nav [data-sidebar="menu-badge"] {
+    @apply right-3 text-zinc-400;
   }
 
   .home-content {
@@ -295,7 +278,7 @@
   }
 
   .role-preset-search {
-    @apply flex h-9 w-56 items-center gap-2 rounded-md border bg-white px-3 text-muted-foreground shadow-xs focus-within:ring-2 focus-within:ring-ring;
+    @apply relative block w-56 text-muted-foreground;
   }
 
   .role-preset-toolbar {
@@ -303,11 +286,11 @@
   }
 
   .role-preset-search > svg {
-    @apply size-3.5 shrink-0;
+    @apply pointer-events-none absolute left-2.5 top-1/2 z-10 size-3.5 -translate-y-1/2;
   }
 
   .role-preset-search > input {
-    @apply min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground;
+    @apply h-9 pl-8 text-xs;
   }
 
   .role-preset-grid {
@@ -319,31 +302,11 @@
   }
 
   .role-preset-card__main {
-    @apply flex size-full min-h-32 items-start gap-3 p-4 pr-14 text-left focus-visible:ring-2 focus-visible:ring-ring;
+    @apply flex size-full min-h-32 items-start gap-3 whitespace-normal p-4 pr-14 text-left focus-visible:ring-2 focus-visible:ring-ring;
   }
 
-  .role-preset-card__icon {
-    @apply grid size-9 shrink-0 place-items-center rounded-md;
-  }
-
-  .role-preset-card__icon > svg {
-    @apply size-4;
-  }
-
-  .role-preset-card__icon[data-tone="amber"] {
-    @apply bg-amber-100 text-amber-700;
-  }
-
-  .role-preset-card__icon[data-tone="blue"] {
-    @apply bg-sky-100 text-sky-700;
-  }
-
-  .role-preset-card__icon[data-tone="green"] {
-    @apply bg-emerald-100 text-emerald-700;
-  }
-
-  .role-preset-card__icon[data-tone="rose"] {
-    @apply bg-rose-100 text-rose-700;
+  .role-preset-card__avatar {
+    @apply size-11 shrink-0 rounded-full border border-blue-100 bg-blue-50 object-cover;
   }
 
   .role-preset-card__content {
@@ -380,38 +343,24 @@
     @apply size-3.5;
   }
 
-  .role-preset-dialog-backdrop {
-    @apply fixed inset-0 z-50 grid place-items-center bg-black/30 p-4 backdrop-blur-[2px];
-  }
-
   .role-preset-dialog {
-    @apply grid max-h-[calc(100dvh-32px)] w-full max-w-xl gap-4 overflow-y-auto rounded-lg border bg-white p-5 shadow-2xl;
+    @apply max-h-[calc(100dvh-32px)] max-w-xl gap-4 overflow-y-auto;
   }
 
-  .role-preset-dialog > header {
-    @apply flex items-start gap-3 border-b pb-4;
+  .role-preset-dialog__header {
+    @apply flex-row items-start gap-3 border-b pb-4 pr-8;
   }
 
-  .role-preset-dialog > header > span {
+  .role-preset-dialog__header > span {
     @apply grid size-9 shrink-0 place-items-center rounded-md bg-emerald-100 text-emerald-700;
   }
 
-  .role-preset-dialog > header > span svg { @apply size-4; }
-  .role-preset-dialog > header > div { @apply min-w-0 flex-1; }
-  .role-preset-dialog h2 { @apply text-sm font-semibold; }
-  .role-preset-dialog header p { @apply mt-1 text-xs text-muted-foreground; }
+  .role-preset-dialog__header > span svg { @apply size-4; }
+  .role-preset-dialog__header > div { @apply min-w-0 flex-1; }
   .role-preset-dialog__grid { @apply grid grid-cols-2 gap-3; }
-  .role-preset-dialog > label,
-  .role-preset-dialog__grid label { @apply grid gap-1.5 text-xs font-medium; }
-  .role-preset-dialog input,
-  .role-preset-dialog select,
-  .role-preset-dialog textarea { @apply w-full rounded-md border bg-background px-3 py-2 text-xs font-normal outline-none focus:ring-2 focus:ring-ring; }
-  .role-preset-dialog input,
-  .role-preset-dialog select { @apply h-9; }
-  .role-preset-dialog textarea { @apply resize-y leading-5; }
+  .role-preset-dialog__field { @apply grid gap-1.5; }
   .role-preset-dialog__prompt { @apply min-h-40 font-mono; }
-  .role-preset-dialog > p[role="alert"] { @apply rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700; }
-  .role-preset-dialog > footer { @apply flex justify-end gap-2 border-t pt-4; }
+  .role-preset-dialog__error { @apply rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700; }
 
   .role-preset-empty {
     @apply flex min-h-60 flex-col items-center justify-center rounded-lg border border-dashed bg-white/40 text-center;
@@ -451,6 +400,14 @@
     @apply absolute inset-x-0 bottom-0 h-10;
     content: "";
     background: linear-gradient(to bottom, transparent, rgb(250 250 250 / 75%));
+  }
+
+  .workspace-card__preview[data-thumbnail="true"]::after {
+    display: none;
+  }
+
+  .workspace-card__preview > img {
+    @apply h-full w-full object-contain;
   }
 
   .workspace-card__team {
@@ -559,26 +516,6 @@
 
   .workspace-card[data-busy="true"] {
     @apply pointer-events-none opacity-60;
-  }
-
-  .workspace-card__menu-popover {
-    @apply absolute right-2 top-11 z-30 grid w-36 gap-0.5 rounded-md border bg-white p-1 shadow-lg;
-  }
-
-  .workspace-card__menu-popover button {
-    @apply flex h-8 items-center gap-2 rounded-sm px-2 text-left text-xs text-foreground outline-none hover:bg-muted focus-visible:bg-muted;
-  }
-
-  .workspace-card__menu-popover svg {
-    @apply size-3.5 text-muted-foreground;
-  }
-
-  .workspace-card__menu-popover .workspace-card__menu-danger {
-    @apply text-red-600 hover:bg-red-50 focus-visible:bg-red-50;
-  }
-
-  .workspace-card__menu-popover .workspace-card__menu-danger svg {
-    @apply text-red-500;
   }
 
   .new-workspace-card {
@@ -1037,20 +974,16 @@
     @apply mb-4 grid gap-2.5;
   }
 
-  .conversation-message {
-    @apply max-w-[88%] text-[12px] leading-[1.55];
-  }
-
-  .conversation-message p {
+  .conversation-message--user > p {
     @apply m-0 whitespace-pre-wrap break-words;
   }
 
   .conversation-message--user {
-    @apply ml-auto rounded-lg rounded-br-sm bg-foreground px-3 py-2 text-background;
+    @apply ml-auto max-w-[88%] rounded-lg rounded-br-sm bg-foreground px-3 py-2 text-[12px] leading-[1.55] text-background;
   }
 
   .conversation-message--assistant {
-    @apply mr-auto min-w-16 rounded-lg rounded-bl-sm border bg-white px-3 py-2 text-foreground shadow-xs;
+    @apply mr-auto grid w-full max-w-3xl min-w-16 gap-2 text-sm leading-6 text-foreground;
   }
 
   .conversation-message__attachments {
@@ -1090,12 +1023,12 @@
 
   .thought-section,
   .tool-call {
-    @apply rounded-md border bg-white text-[10px] text-muted-foreground;
+    @apply text-[10px] text-muted-foreground;
   }
 
   .thought-section summary,
   .tool-call summary {
-    @apply flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-2 font-medium text-zinc-600;
+    @apply flex cursor-pointer list-none items-center gap-1.5 py-1 font-medium text-zinc-600 hover:text-zinc-900;
   }
 
   .thought-section summary::-webkit-details-marker,
@@ -1109,7 +1042,7 @@
   }
 
   .thought-section > p {
-    @apply m-0 whitespace-pre-wrap border-t px-2.5 py-2 leading-4;
+    @apply mb-0 ml-4 mt-1 whitespace-pre-wrap leading-4;
   }
 
   .tool-call-list {
@@ -1125,7 +1058,7 @@
   }
 
   .tool-call__details {
-    @apply grid gap-2 border-t p-2.5;
+    @apply ml-4 mt-1 grid gap-2 pb-1;
   }
 
   .tool-call__details strong {
@@ -1134,6 +1067,34 @@
 
   .tool-call__details pre {
     @apply mb-0 mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-zinc-950 p-2 font-mono text-[9px] leading-4 text-zinc-100;
+  }
+
+  .tools-group {
+    @apply text-[10px] text-muted-foreground;
+  }
+
+  .tools-group > summary {
+    @apply flex cursor-pointer list-none items-center gap-1.5 py-1 font-medium text-zinc-600 hover:text-zinc-900;
+  }
+
+  .tools-group > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tools-group > summary svg {
+    @apply size-3 shrink-0 transition-transform;
+  }
+
+  .tools-group[open] > summary svg {
+    @apply rotate-90;
+  }
+
+  .tools-group > summary small {
+    @apply font-normal text-zinc-400;
+  }
+
+  .tools-group__items {
+    @apply ml-4 mt-1 grid gap-1;
   }
 
   .usage-summary {
@@ -1740,7 +1701,11 @@
   display: none;
 }
 
-@media (max-width: 640px) {
+.role-preset-card .role-preset-card__main {
+  white-space: normal;
+}
+
+@media (max-width: 767px) {
   .home-header {
     @apply justify-between px-3;
   }
@@ -1757,48 +1722,13 @@
     @apply hidden;
   }
 
-  .home-shell {
-    @apply block;
+  [data-mobile="true"] .home-sidebar__header {
+    @apply mb-8 px-4;
   }
 
-  .home-sidebar {
-    @apply fixed bottom-0 left-0 top-0 z-50 h-dvh w-[280px] bg-zinc-100 px-3 py-5 shadow-xl transition-transform;
-    transform: translateX(var(--home-sidebar-translate, -100%)) !important;
-  }
+}
 
-  .home-sidebar__header {
-    @apply mb-8 px-1;
-  }
-
-  .home-sidebar__collapse {
-    @apply hidden;
-  }
-
-  .home-page[data-sidebar-collapsed="true"] .home-sidebar__brand {
-    @apply flex;
-  }
-
-  .home-page[data-sidebar-collapsed="true"] .home-nav > button {
-    @apply justify-start px-3;
-  }
-
-  .home-page[data-sidebar-collapsed="true"] .home-nav > button > span,
-  .home-page[data-sidebar-collapsed="true"] .home-nav > button > small,
-  .home-page[data-sidebar-collapsed="true"] .home-nav > button > svg:last-child:not(:first-child) {
-    @apply block;
-  }
-
-  .home-sidebar__scrim {
-    @apply fixed inset-0 z-40 block bg-black/25 transition-opacity;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .home-sidebar__scrim[data-open="true"] {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
+@media (max-width: 640px) {
   .home-content {
     @apply px-4 py-7;
   }
@@ -1855,10 +1785,6 @@
 }
 
 @media (min-width: 641px) and (max-width: 900px) {
-  .home-shell {
-    @apply grid-cols-[200px_minmax(0,1fr)];
-  }
-
   .home-content {
     @apply px-5;
   }
@@ -1878,6 +1804,81 @@ body.agent-weave-clean-ui .tlui-menu-zone,
 body.agent-weave-clean-ui .tlui-navigation-panel,
 body.agent-weave-clean-ui .tlui-main-toolbar {
   display: none !important;
+}
+
+.message-render-debugger {
+  min-height: 100dvh;
+  background: var(--mio-surface);
+}
+
+.message-render-debugger__header {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--mio-border-subtle);
+  background: white;
+  padding: 0 20px;
+}
+
+.message-render-debugger__header > a {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--mio-border-default);
+  border-radius: 8px;
+  color: inherit;
+}
+
+.message-render-debugger__header svg { width: 15px; }
+.message-render-debugger__header div { display: flex; flex-direction: column; }
+.message-render-debugger__header strong { font-size: 13px; }
+.message-render-debugger__header span { color: var(--mio-text-tertiary); font-size: 10px; }
+
+.message-render-debugger__stage {
+  width: min(100% - 32px, 760px);
+  margin: 0 auto;
+  padding: 40px 0 80px;
+}
+
+.message-render-debugger__section-label {
+  margin: 24px 0 8px;
+  color: var(--mio-text-tertiary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.message-render-debugger__section-label:first-child {
+  margin-top: 0;
+}
+
+.message-render-debugger__conversation {
+  display: grid;
+  gap: 24px;
+  min-height: 640px;
+  align-content: start;
+  border: 1px solid var(--mio-border-default);
+  border-radius: 8px;
+  background: var(--mio-canvas);
+  padding: 20px;
+}
+
+.message-render-debugger__conversation--compact {
+  min-height: 0;
+}
+
+.message-render-debugger__streamdown {
+  width: 100%;
+  max-width: 48rem;
+  overflow: hidden;
+  border: 1px solid var(--mio-border-default);
+  border-radius: 8px;
+  background: var(--mio-canvas);
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 /* Miora-inspired color token debugger. Scoped to keep production UI unchanged. */

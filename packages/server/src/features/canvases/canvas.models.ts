@@ -15,6 +15,6 @@ export interface CanvasRepository {
   list(): StoredCanvas[]
   update(canvasId: string, patch: Partial<Pick<StoredCanvas, "name" | "description" | "accent" | "updatedAt">>): StoredCanvas | undefined
   delete(canvasId: string): boolean
-  getSnapshot(canvasId: string): { document: unknown; updatedAt: string } | undefined
-  saveSnapshot(canvasId: string, document: unknown, updatedAt: string): void
+  getSnapshot(canvasId: string): { document: unknown; thumbnailDataUrl: string | null; updatedAt: string } | undefined
+  saveSnapshot(canvasId: string, document: unknown, thumbnailDataUrl: string | null, updatedAt: string): void
 }

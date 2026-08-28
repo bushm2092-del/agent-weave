@@ -1,10 +1,10 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter } from "react-router"
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     lazy: async () => {
-      const { App } = await import('@/App')
+      const { App } = await import("@/App")
 
       return { Component: App }
     },
@@ -12,25 +12,33 @@ export const router = createBrowserRouter([
       {
         index: true,
         lazy: async () => {
-          const { HomePage } = await import('@/pages/home/home-page')
+          const { HomePage } = await import("@/pages/home/home-page")
 
           return { Component: HomePage }
         },
       },
       {
-        path: 'canvas/:canvasId',
+        path: "canvas/:canvasId",
         lazy: async () => {
-          const { CanvasPage } = await import('@/pages/canvas/canvas-page')
+          const { CanvasPage } = await import("@/pages/canvas/canvas-page")
 
           return { Component: CanvasPage }
         },
       },
       {
-        path: 'debug/tokens',
+        path: "debug/tokens",
         lazy: async () => {
-          const { TokenDebuggerPage } = await import('@/pages/debug/token-debugger-page')
+          const { TokenDebuggerPage } = await import("@/pages/debug/token-debugger-page")
 
           return { Component: TokenDebuggerPage }
+        },
+      },
+      {
+        path: "debug/messages",
+        lazy: async () => {
+          const { MessageRenderPage } = await import("@/pages/debug/message-render-page")
+
+          return { Component: MessageRenderPage }
         },
       },
     ],

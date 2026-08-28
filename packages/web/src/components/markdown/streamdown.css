@@ -1,0 +1,96 @@
+.markdown-render {
+  min-width: 0;
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.markdown-render :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--foreground);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.markdown-render h1 {
+  font-size: 24px;
+}
+.markdown-render h2 {
+  font-size: 20px;
+}
+.markdown-render :is(h3, h4) {
+  font-size: 17px;
+  line-height: 22px;
+}
+.markdown-render :is(h5, h6) {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.markdown-render [data-streamdown="link"] {
+  color: #2563eb;
+  font-weight: 400;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.markdown-render [data-streamdown="blockquote"] {
+  color: var(--foreground);
+  font-style: normal;
+  line-height: 22px;
+}
+
+.markdown-render [data-streamdown="code-block-header"] {
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+
+.markdown-render [data-streamdown="inline-code"],
+.markdown-render [data-streamdown="code-block-body"],
+.markdown-render [data-streamdown="code-block-body"] :is(pre, code) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.markdown-render [data-streamdown="inline-code"] {
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.markdown-render [data-streamdown="code-block-body"] {
+  color: var(--foreground);
+  font-size: 12px;
+  line-height: 20px;
+  tab-size: 4;
+}
+
+.markdown-render [data-streamdown="table-header-cell"] {
+  color: var(--foreground);
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.markdown-streamdown-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  stroke-width: 1.5;
+}
+
+.markdown-render [data-streamdown="code-block-actions"] button,
+.markdown-render [data-streamdown="table-wrapper"] button,
+.markdown-render [data-streamdown="mermaid-block-actions"] button,
+.markdown-render [data-streamdown="mermaid"] > div > div:has(> button) button {
+  color: var(--muted-foreground);
+}
+
+.markdown-render [data-streamdown="code-block-actions"] button:hover,
+.markdown-render [data-streamdown="table-wrapper"] button:hover,
+.markdown-render [data-streamdown="mermaid-block-actions"] button:hover,
+.markdown-render [data-streamdown="mermaid"] > div > div:has(> button) button:hover {
+  color: var(--foreground);
+}

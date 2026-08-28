@@ -11,6 +11,7 @@ import type { Draft } from "immer"
 import type {
   ConversationView,
   PendingPermission,
+  RunRenderPart,
   ToolActivity,
 } from "@/features/conversations/conversation-view.types"
 
@@ -56,12 +57,18 @@ export function applyConversationEvent(view: Draft<ConversationView>, event: Con
   const run = view.runs.find((item) => item.id === event.runId)
   if (event.type === "assistant.delta" && run) {
     const text = record(event.data)?.text
-    if (typeof text === "string") run.assistantText += text
+    if (typeof text === "string") {
+      run.assistantText += text
+      appendTextPart(view, event.runId, "markdown", text, event.id)
+    }
     return
   }
   if (event.type === "thought.delta" && run) {
     const text = record(event.data)?.text
-    if (typeof text === "string") run.thoughtText += text
+    if (typeof text === "string") {
+      run.thoughtText += text
+      appendTextPart(view, event.runId, "thought", text, event.id)
+    }
     return
   }
   if (event.type === "usage.updated" && run) {
@@ -75,12 +82,20 @@ export function applyConversationEvent(view: Draft<ConversationView>, event: Con
   }
   if (event.type === "permission.requested") {
     const permission = parsePermission(event)
-    if (permission) view.pendingPermissions[permission.id] = permission
+    if (permission) {
+      view.pendingPermissions[permission.id] = permission
+      appendPart(view, event.runId, { id: event.id, type: "permission", permissionId: permission.id })
+    }
     return
   }
   if (event.type === "permission.resolved") {
     const permissionId = record(event.data)?.permissionId
-    if (typeof permissionId === "string") delete view.pendingPermissions[permissionId]
+    if (typeof permissionId === "string") {
+      delete view.pendingPermissions[permissionId]
+      view.partsByRun[event.runId] = (view.partsByRun[event.runId] ?? []).filter(
+        (part) => part.type !== "permission" || part.permissionId !== permissionId,
+      )
+    }
   }
 }
 
@@ -119,8 +134,30 @@ function updateTool(view: Draft<ConversationView>, event: ConversationEvent, run
     ...(data.rawOutput === undefined ? {} : { rawOutput: data.rawOutput }),
   }
   const index = tools.findIndex((tool) => tool.id === id)
-  if (index === -1) tools.push(next)
+  if (index === -1) {
+    tools.push(next)
+    appendPart(view, runId, { id: event.id, type: "tool", toolId: id })
+  }
   else tools[index] = { ...tools[index], ...next }
+}
+
+function appendTextPart(
+  view: Draft<ConversationView>,
+  runId: string,
+  type: "markdown" | "thought",
+  content: string,
+  eventId: string,
+): void {
+  if (!content) return
+  const parts = (view.partsByRun[runId] ??= [])
+  const last = parts.at(-1)
+  if (last?.type === type) last.content += content
+  else parts.push({ id: eventId, type, content })
+}
+
+function appendPart(view: Draft<ConversationView>, runId: string, part: RunRenderPart): void {
+  const parts = (view.partsByRun[runId] ??= [])
+  if (!parts.some((item) => item.type === part.type && item.id === part.id)) parts.push(part)
 }
 
 function parsePermission(event: ConversationEvent & { runId?: string }): PendingPermission | undefined {

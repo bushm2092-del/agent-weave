@@ -50,7 +50,12 @@ class CanvasController {
     })
     try {
       const snapshot = await canvasApi.getSnapshot(source.id)
-      if (snapshot.document) await canvasApi.saveSnapshot(created.id, { document: snapshot.document })
+      if (snapshot.document) {
+        await canvasApi.saveSnapshot(created.id, {
+          document: snapshot.document,
+          thumbnailDataUrl: snapshot.thumbnailDataUrl,
+        })
+      }
       return await this.get(created.id)
     } catch (error) {
       await this.delete(created.id).catch(() => undefined)

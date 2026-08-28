@@ -66,6 +66,7 @@ export class CanvasService {
     return {
       canvasId,
       document: snapshot?.document ?? null,
+      thumbnailDataUrl: snapshot?.thumbnailDataUrl ?? null,
       updatedAt: snapshot?.updatedAt ?? null,
     }
   }
@@ -73,8 +74,10 @@ export class CanvasService {
   saveSnapshot(canvasId: string, input: SaveCanvasSnapshotRequest): CanvasSnapshot {
     this.requireCanvas(canvasId)
     const updatedAt = new Date().toISOString()
-    this.repository.saveSnapshot(canvasId, input.document, updatedAt)
-    return { canvasId, document: input.document, updatedAt }
+    const current = this.repository.getSnapshot(canvasId)
+    const thumbnailDataUrl = input.thumbnailDataUrl === undefined ? (current?.thumbnailDataUrl ?? null) : input.thumbnailDataUrl
+    this.repository.saveSnapshot(canvasId, input.document, thumbnailDataUrl, updatedAt)
+    return { canvasId, document: input.document, thumbnailDataUrl, updatedAt }
   }
 
   private requireCanvas(canvasId: string): StoredCanvas {
@@ -88,6 +91,7 @@ export class CanvasService {
       ...canvas,
       agents: countAgentShapes(this.repository.getSnapshot(canvas.id)?.document),
       teams: this.teams.list(canvas.id).length,
+      thumbnailDataUrl: this.repository.getSnapshot(canvas.id)?.thumbnailDataUrl ?? null,
     }
   }
 }

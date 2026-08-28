@@ -1,7 +1,12 @@
 import type { AgentProvider, CreateRolePresetRequest, RolePreset } from "@agent-weave/contracts"
-import { Sparkles, X } from "lucide-react"
+import { Sparkles } from "lucide-react"
 import { useId, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { AGENT_RUNNERS, AGENT_RUNNER_IDS } from "@/features/canvas/agent-options"
 
 export function RolePresetDialog({
@@ -20,7 +25,7 @@ export function RolePresetDialog({
   const [systemPrompt, setSystemPrompt] = useState(preset?.systemPrompt ?? "")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
-  const titleId = useId()
+  const fieldId = useId()
 
   const save = async () => {
     setSaving(true)
@@ -40,25 +45,25 @@ export function RolePresetDialog({
   }
 
   return (
-    <div className="role-preset-dialog-backdrop" role="presentation">
-      <section aria-busy={saving} aria-labelledby={titleId} className="role-preset-dialog" role="dialog">
-        <header>
+    <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose() }}>
+      <DialogContent aria-busy={saving} className="role-preset-dialog" showCloseButton={!saving}>
+        <DialogHeader className="role-preset-dialog__header">
           <span><Sparkles /></span>
-          <div><h2 id={titleId}>{preset ? "Edit role preset" : "New role preset"}</h2><p>Define the behavior injected into an agent session.</p></div>
-          <Button aria-label="Close" disabled={saving} size="icon-sm" variant="ghost" onClick={onClose}><X /></Button>
-        </header>
+          <div><DialogTitle>{preset ? "Edit role preset" : "New role preset"}</DialogTitle><DialogDescription>Define the behavior injected into an agent session.</DialogDescription></div>
+        </DialogHeader>
         <div className="role-preset-dialog__grid">
-          <label>Name<input value={name} disabled={saving} onChange={(event) => setName(event.target.value)} /></label>
-          <label>Category<input value={category} disabled={saving} onChange={(event) => setCategory(event.target.value)} /></label>
+          <div className="role-preset-dialog__field"><Label htmlFor={`${fieldId}-name`}>Name</Label><Input id={`${fieldId}-name`} value={name} disabled={saving} onChange={(event) => setName(event.target.value)} /></div>
+          <div className="role-preset-dialog__field"><Label htmlFor={`${fieldId}-category`}>Category</Label><Input id={`${fieldId}-category`} value={category} disabled={saving} onChange={(event) => setCategory(event.target.value)} /></div>
         </div>
-        <label>Description<textarea rows={2} value={description} disabled={saving} onChange={(event) => setDescription(event.target.value)} /></label>
-        <label>Default runner<select value={agent} disabled={saving} onChange={(event) => setAgent(event.target.value as AgentProvider)}>
-          {AGENT_RUNNER_IDS.map((id) => <option key={id} value={AGENT_RUNNERS[id].provider}>{AGENT_RUNNERS[id].label}</option>)}
-        </select></label>
-        <label>System prompt<textarea className="role-preset-dialog__prompt" rows={8} value={systemPrompt} disabled={saving} onChange={(event) => setSystemPrompt(event.target.value)} /></label>
-        {error && <p role="alert">{error}</p>}
-        <footer><Button variant="ghost" disabled={saving} onClick={onClose}>Cancel</Button><Button disabled={saving || !name.trim() || !category.trim() || !description.trim() || !systemPrompt.trim()} onClick={() => void save()}>{saving ? "Saving..." : "Save preset"}</Button></footer>
-      </section>
-    </div>
+        <div className="role-preset-dialog__field"><Label htmlFor={`${fieldId}-description`}>Description</Label><Textarea id={`${fieldId}-description`} rows={2} value={description} disabled={saving} onChange={(event) => setDescription(event.target.value)} /></div>
+        <div className="role-preset-dialog__field"><Label>Default runner</Label><Select value={agent} disabled={saving} onValueChange={(value) => setAgent(value as AgentProvider)}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent>{AGENT_RUNNER_IDS.map((id) => <SelectItem key={id} value={AGENT_RUNNERS[id].provider}>{AGENT_RUNNERS[id].label}</SelectItem>)}</SelectContent></Select></div>
+        <div className="role-preset-dialog__field"><Label htmlFor={`${fieldId}-prompt`}>System prompt</Label><Textarea id={`${fieldId}-prompt`} className="role-preset-dialog__prompt" rows={8} value={systemPrompt} disabled={saving} onChange={(event) => setSystemPrompt(event.target.value)} /></div>
+        {error && <p className="role-preset-dialog__error" role="alert">{error}</p>}
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline" disabled={saving}>Cancel</Button></DialogClose>
+          <Button disabled={saving || !name.trim() || !category.trim() || !description.trim() || !systemPrompt.trim()} onClick={() => void save()}>{saving ? "Saving..." : "Save preset"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

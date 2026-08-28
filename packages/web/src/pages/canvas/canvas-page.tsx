@@ -114,6 +114,17 @@ export function CanvasPage() {
             document: snapshot.document as ReturnType<typeof getSnapshot>["document"],
           })
           mountedEditor.clearHistory()
+          if (!snapshot.thumbnailDataUrl) {
+            window.requestAnimationFrame(() => {
+              void createCanvasThumbnail(mountedEditor)
+                .then((thumbnailDataUrl) => {
+                  if (thumbnailDataUrl) {
+                    return canvasApi.saveSnapshot(canvasId, { document: snapshot.document, thumbnailDataUrl })
+                  }
+                })
+                .catch(() => undefined)
+            })
+          }
         }
         setEditor(mountedEditor)
       } catch (error) {
@@ -131,7 +142,10 @@ export function CanvasPage() {
       const document = getSnapshot(editor.store).document
       saveTail = saveTail
         .catch(() => undefined)
-        .then(() => canvasApi.saveSnapshot(canvasId, { document }))
+        .then(async () => {
+          const thumbnailDataUrl = await createCanvasThumbnail(editor)
+          await canvasApi.saveSnapshot(canvasId, { document, thumbnailDataUrl })
+        })
         .then(() => undefined)
         .catch((error) => {
           setCanvasError(error instanceof Error ? error.message : "Unable to save canvas content.")
@@ -436,6 +450,41 @@ function useSingleSelectedTeam(editor: Editor | null): AgentTeamShape | null {
     },
     [editor],
   )
+}
+
+async function createCanvasThumbnail(editor: Editor): Promise<string | null | undefined> {
+  const shapeIds = [...editor.getCurrentPageShapeIds()]
+  if (!shapeIds.length) return null
+  const bounds = editor.getShapesPageBounds(shapeIds)
+  if (!bounds) return null
+
+  try {
+    const maxDimension = 640
+    const scale = Math.min(1, maxDimension / Math.max(bounds.width + 48, bounds.height + 48))
+    const { blob } = await editor.toImage(shapeIds, {
+      background: true,
+      darkMode: false,
+      format: "webp",
+      padding: 24,
+      pixelRatio: 1,
+      preserveAspectRatio: "xMidYMid meet",
+      quality: 0.76,
+      scale,
+    })
+    return await blobToDataUrl(blob)
+  } catch {
+    // Saving the document is more important than refreshing its optional preview.
+    return undefined
+  }
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener("load", () => resolve(String(reader.result)))
+    reader.addEventListener("error", () => reject(reader.error ?? new Error("Unable to read canvas thumbnail.")))
+    reader.readAsDataURL(blob)
+  })
 }
 
 function isNotFound(error: unknown): boolean {
