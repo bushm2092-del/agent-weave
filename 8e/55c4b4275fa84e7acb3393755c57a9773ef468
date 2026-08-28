@@ -1,0 +1,143 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.20",
+  "base_commit_sha": "8e55c4b4275fa84e7acb3393755c57a9773ef468",
+  "prompts": {},
+  "commit_stats": {
+    "git_diff_added_lines": 193,
+    "git_diff_deleted_lines": 36,
+    "ai_additions": 0,
+    "ai_accepted": 0,
+    "BYMC": 192,
+    "mixed_additions": 0,
+    "BYAC": 0,
+    "BYRC": 0,
+    "per_file": {
+      "packages/desktop/package.json": {
+        "BYMC": [
+          "10",
+          "17-18",
+          "40-44"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/desktop/scripts/ensure-server.mjs": {
+        "BYMC": [
+          "21-24"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/desktop/src/main.ts": {
+        "BYMC": [
+          "1",
+          "5-7",
+          "11-14",
+          "54",
+          "92-138",
+          "140-141",
+          "148-154"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/server/package.json": {
+        "BYMC": [
+          "6-14"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/server/src/app.ts": {
+        "BYMC": [
+          "4",
+          "14"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/server/src/config/env.ts": {
+        "BYMC": [
+          "7",
+          "26"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/server/src/embedded.ts": {
+        "BYMC": [
+          "1-45"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/server/src/features/teams/team.service.ts": {
+        "BYMC": [
+          "1092"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/server/src/index.ts": {
+        "BYMC": [
+          "1",
+          "3-4",
+          "7-9",
+          "12-13"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/server/tsconfig.build.json": {
+        "BYMC": [
+          "5-6"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/web/src/features/files/components/file-sidebar.tsx": {
+        "BYMC": [
+          "1",
+          "3",
+          "6",
+          "8",
+          "15-17"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/web/src/index.css": {
+        "BYMC": [
+          "314-320",
+          "333-341"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/web/src/pages/canvas/canvas-page.tsx": {
+        "BYMC": [
+          "1",
+          "51",
+          "56-59",
+          "407",
+          "420-421",
+          "450-461"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "packages/web/src/pages/home/home-page.tsx": {
+        "BYMC": [
+          "231",
+          "234"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      }
+    }
+  },
+  "commit_timestamp": 1787929897,
+  "requirement_id": ""
+}
