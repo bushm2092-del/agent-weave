@@ -20,6 +20,7 @@ import { SelectionLayoutToolbar } from "@/features/canvas/layout"
 import { AGENT_RUNNERS } from "@/features/canvas/agent-options"
 import { AgentShapeUtil } from "@/features/canvas/shapes/agent"
 import { AgentTeamShapeUtil } from "@/features/canvas/shapes/agent-team"
+import { FilePreviewShapeUtil } from "@/features/canvas/shapes/file-preview"
 import { canvasApi, canvasController } from "@/features/canvases"
 import { conversationApi, conversationController } from "@/features/conversations"
 import { FileSidebar, useSingleSelectedAgent } from "@/features/files"
@@ -40,7 +41,7 @@ import {
 import type { AgentTeamShape } from "@/features/canvas/shapes/agent-team"
 import { ApiClientError } from "@/lib/api"
 
-const shapeUtils = [AgentShapeUtil, AgentTeamShapeUtil]
+const shapeUtils = [AgentShapeUtil, AgentTeamShapeUtil, FilePreviewShapeUtil]
 export function CanvasPage() {
   const { canvasId = "untitled" } = useParams()
   const [editor, setEditor] = useState<Editor | null>(null)
@@ -62,6 +63,24 @@ export function CanvasPage() {
           onCreateTeam={() => {
             setComposerOpen(false)
             setTeamComposerOpen(true)
+          }}
+          onCreateFilePreview={() => {
+            const input = document.createElement("input")
+            input.type = "file"
+            input.accept = "image/*,.md,.markdown,.txt,.csv,.pdf,.xlsx,.xls,.docx,.doc"
+            input.onchange = () => {
+              const file = input.files?.[0]
+              if (!file || !editor) return
+              const reader = new FileReader()
+              reader.onload = () => {
+                const center = editor.getViewportPageBounds().center
+                const id = createShapeId()
+                editor.createShape({ id, type: "file-preview", x: center.x - 180, y: center.y - 140, props: { name: file.name, mimeType: file.type || "application/octet-stream", dataUrl: String(reader.result), w: 360, h: 280 } })
+                editor.select(id)
+              }
+              reader.readAsDataURL(file)
+            }
+            input.click()
           }}
         />
       )

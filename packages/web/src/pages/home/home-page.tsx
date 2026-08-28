@@ -39,6 +39,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -70,25 +71,30 @@ function HomeSidebar({
   }
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader>
-        <Link to="/" aria-label="AgentWeave home">
-          <img src="/icon.png" alt="" />
-          <span><strong>AgentWeave</strong><small>Agent teamwork</small></span>
-        </Link>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" tooltip="AgentWeave home" onClick={() => select("canvases")}>
+              <span className="grid size-8 shrink-0 place-items-center"><img className="size-8 object-contain" src="/icon.png" alt="" /></span>
+              <span className="grid min-w-0 flex-1 text-left text-sm leading-tight"><strong className="truncate">AgentWeave</strong><small className="truncate text-xs text-muted-foreground">Agent teamwork</small></span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton isActive={activeSection === "canvases"} size="lg" tooltip="Your canvases" onClick={() => select("canvases")}>
+                <SidebarMenuButton isActive={activeSection === "canvases"} tooltip="Your canvases" onClick={() => select("canvases")}>
                   <LayoutDashboard /><span>Your canvases</span>
                 </SidebarMenuButton>
                 <SidebarMenuBadge>{canvasCount}</SidebarMenuBadge>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton isActive={activeSection === "presets"} size="lg" tooltip="Role presets" onClick={() => select("presets")}>
+                <SidebarMenuButton isActive={activeSection === "presets"} tooltip="Role presets" onClick={() => select("presets")}>
                   <Sparkles /><span>Role presets</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

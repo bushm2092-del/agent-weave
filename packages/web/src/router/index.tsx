@@ -41,6 +41,14 @@ export const router = createBrowserRouter([
           return { Component: MessageRenderPage }
         },
       },
+      {
+        path: "debug/sidebar",
+        lazy: async () => {
+          const { SidebarDebuggerPage } = await import("@/pages/debug/sidebar-debugger-page")
+
+          return { Component: SidebarDebuggerPage }
+        },
+      },
     ],
   },
 ])

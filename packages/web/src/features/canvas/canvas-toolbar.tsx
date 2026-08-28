@@ -1,4 +1,4 @@
-import { Bot, Hand, MousePointer2, Users } from "lucide-react"
+import { Bot, FileSearch, Hand, MousePointer2, Users } from "lucide-react"
 import { useEditor, useValue } from "tldraw"
 
 import { Button } from "@/components/ui/button"
@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button"
 export function CanvasToolbar({
   onCreateAgent,
   onCreateTeam,
+  onCreateFilePreview,
 }: {
   onCreateAgent: () => void
   onCreateTeam: () => void
+  onCreateFilePreview: () => void
 }) {
   const editor = useEditor()
   const activeTool = useValue("canvas toolbar active tool", () => editor.getCurrentToolId(), [editor])
@@ -45,6 +47,9 @@ export function CanvasToolbar({
       </Button>
       <Button size="icon" variant="ghost" aria-label="New agent team" title="New agent team" onClick={() => openCreator(onCreateTeam)}>
         <Users />
+      </Button>
+      <Button size="icon" variant="ghost" aria-label="New file preview" title="New file preview" onClick={() => openCreator(onCreateFilePreview)}>
+        <FileSearch />
       </Button>
     </div>
   )
