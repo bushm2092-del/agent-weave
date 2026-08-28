@@ -15,8 +15,8 @@ import type {
 } from "@/features/conversations/conversation-view.types"
 
 export function applyConversationEvent(view: Draft<ConversationView>, event: ConversationEvent): void {
-  if (event.sequence <= view.lastSequence) return
-  view.lastSequence = event.sequence
+  if (!event.transient && event.sequence <= view.lastSequence) return
+  if (!event.transient) view.lastSequence = event.sequence
   view.error = undefined
 
   if (event.type === "conversation.initializing" || event.type === "conversation.ready") {
@@ -87,8 +87,19 @@ export function applyConversationEvent(view: Draft<ConversationView>, event: Con
 function upsertRun(view: Draft<ConversationView>, run: ConversationView["runs"][number]): void {
   const index = view.runs.findIndex((item) => item.id === run.id)
   if (index === -1) view.runs.push(run)
-  else view.runs[index] = run
+  else {
+    const current = view.runs[index]
+    view.runs[index] = {
+      ...run,
+      assistantText: longerText(current.assistantText, run.assistantText),
+      thoughtText: longerText(current.thoughtText, run.thoughtText),
+    }
+  }
   view.runs.sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+}
+
+function longerText(current: string, incoming: string): string {
+  return current.length > incoming.length ? current : incoming
 }
 
 function updateTool(view: Draft<ConversationView>, event: ConversationEvent, runId: string): void {

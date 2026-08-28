@@ -148,9 +148,9 @@ export class SqliteTeamRepository implements TeamRepository {
       this.database
         .prepare(
           `INSERT INTO team_members (
-            slot_id, team_id, conversation_id, name, normalized_name, role, agent, model, mcp_token,
+            slot_id, team_id, conversation_id, name, normalized_name, role, agent, model, role_preset_id, role_prompt, mcp_token,
             runtime_status, work_status, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           input.slotId,
@@ -161,6 +161,8 @@ export class SqliteTeamRepository implements TeamRepository {
           input.role,
           input.agent,
           input.model ?? null,
+          input.rolePresetId ?? null,
+          input.rolePrompt ?? null,
           input.mcpToken,
           input.runtimeStatus,
           input.workStatus,
@@ -777,6 +779,8 @@ export class SqliteTeamRepository implements TeamRepository {
         role TEXT NOT NULL,
         agent TEXT NOT NULL,
         model TEXT,
+        role_preset_id TEXT,
+        role_prompt TEXT,
         mcp_token TEXT NOT NULL UNIQUE,
         runtime_status TEXT NOT NULL,
         work_status TEXT NOT NULL,
@@ -889,6 +893,8 @@ export class SqliteTeamRepository implements TeamRepository {
     `)
     ensureColumn(this.database, "teams", "lifecycle_status", "TEXT NOT NULL DEFAULT 'active'")
     ensureColumn(this.database, "teams", "control_token_hash", "TEXT NOT NULL DEFAULT ''")
+    ensureColumn(this.database, "team_members", "role_preset_id", "TEXT")
+    ensureColumn(this.database, "team_members", "role_prompt", "TEXT")
   }
 }
 
@@ -923,6 +929,8 @@ function mapMember(row: SqliteRow | undefined): StoredTeamMember | undefined {
     role: String(row.role) as TeamMember["role"],
     agent: String(row.agent) as TeamMember["agent"],
     ...(row.model ? { model: String(row.model) } : {}),
+    ...(row.role_preset_id ? { rolePresetId: String(row.role_preset_id) } : {}),
+    ...(row.role_prompt ? { rolePrompt: String(row.role_prompt) } : {}),
     mcpToken: String(row.mcp_token),
     runtimeStatus: String(row.runtime_status) as TeamMember["runtimeStatus"],
     workStatus: String(row.work_status) as TeamMember["workStatus"],
@@ -933,7 +941,7 @@ function mapMember(row: SqliteRow | undefined): StoredTeamMember | undefined {
 }
 
 function publicMember(member: StoredTeamMember): TeamMember {
-  const { mcpToken: _mcpToken, ...value } = member
+  const { mcpToken: _mcpToken, rolePrompt: _rolePrompt, ...value } = member
   return value
 }
 

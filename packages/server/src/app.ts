@@ -6,6 +6,7 @@ import { environment } from "./config/index.js"
 import { canvasRouter } from "./features/canvases/index.js"
 import { conversationRouter } from "./features/conversations/index.js"
 import { fileRouter } from "./features/files/index.js"
+import { rolePresetRouter } from "./features/role-presets/index.js"
 import { teamRouter, teamToolRouter } from "./features/teams/index.js"
 import { errorHandler, getRequestId, notFoundHandler, requestContext } from "./http/index.js"
 
@@ -34,6 +35,7 @@ export function createApp() {
   app.use("/api/v1/canvases", canvasRouter)
   app.use("/api/v1/conversations", conversationRouter)
   app.use("/api/v1/files", fileRouter)
+  app.use("/api/v1/role-presets", rolePresetRouter)
   app.use("/api/v1/teams", teamRouter)
   app.use("/api/v1/internal/team-tools", teamToolRouter)
 

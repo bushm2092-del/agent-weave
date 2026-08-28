@@ -121,7 +121,15 @@
   }
 
   .home-header {
-    @apply flex h-16 items-center justify-between border-b bg-white px-5;
+    @apply flex h-16 items-center justify-end border-b bg-white px-5;
+  }
+
+  .home-header__leading {
+    @apply hidden items-center gap-2;
+  }
+
+  .home-header .home-sidebar-trigger {
+    display: none;
   }
 
   .home-brand {
@@ -150,12 +158,111 @@
     @apply flex items-center gap-2;
   }
 
-  .home-avatar {
-    @apply ml-1 grid size-8 place-items-center rounded-full border bg-emerald-50 text-[11px] font-semibold text-emerald-800;
+  .home-shell {
+    @apply grid min-h-dvh grid-cols-[244px_minmax(0,1fr)] transition-[grid-template-columns] duration-200;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-shell {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .home-main {
+    @apply min-w-0;
+  }
+
+  .home-sidebar {
+    @apply sticky top-0 flex h-dvh flex-col overflow-hidden border-r bg-zinc-100 px-3 py-5;
+  }
+
+  .home-sidebar__scrim {
+    @apply hidden;
+  }
+
+  .home-sidebar__header {
+    @apply mb-10 flex h-11 shrink-0 items-center gap-2 px-1;
+  }
+
+  .home-sidebar__brand {
+    @apply flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden text-foreground no-underline;
+  }
+
+  .home-sidebar__brand > img {
+    @apply size-9 shrink-0 rounded-md object-cover;
+  }
+
+  .home-sidebar__brand > span {
+    @apply min-w-0 whitespace-nowrap;
+  }
+
+  .home-sidebar__brand strong,
+  .home-sidebar__brand small {
+    @apply block;
+  }
+
+  .home-sidebar__brand strong {
+    @apply text-base font-semibold leading-5;
+  }
+
+  .home-sidebar__brand small {
+    @apply text-[9px] uppercase text-muted-foreground;
+  }
+
+  .home-sidebar__collapse {
+    @apply shrink-0 text-zinc-500;
+  }
+
+  .home-nav {
+    @apply grid gap-1;
+  }
+
+  .home-nav > button {
+    @apply flex h-12 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-zinc-600 transition-colors hover:bg-white/60 hover:text-foreground;
+  }
+
+  .home-nav > button[data-active="true"] {
+    @apply bg-white text-primary shadow-xs;
+  }
+
+  .home-nav > button > svg {
+    @apply size-5 shrink-0;
+  }
+
+  .home-nav > button > span {
+    @apply min-w-0 flex-1;
+  }
+
+  .home-nav > button > small {
+    @apply text-[10px] font-normal text-zinc-400;
+  }
+
+  .home-nav > button > svg:last-child:not(:first-child) {
+    @apply size-3.5 text-zinc-400;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-sidebar {
+    @apply px-3;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-sidebar__header {
+    @apply justify-center px-0;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-sidebar__brand {
+    @apply hidden;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-nav > button {
+    @apply justify-center px-0;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-nav > button > span,
+  .home-page[data-sidebar-collapsed="true"] .home-nav > button > small,
+  .home-page[data-sidebar-collapsed="true"] .home-nav > button > svg:last-child:not(:first-child) {
+    @apply hidden;
   }
 
   .home-content {
-    @apply mx-auto w-full max-w-6xl px-6 py-10;
+    @apply mx-auto w-full max-w-6xl px-8 py-10;
   }
 
   .home-content__error {
@@ -177,6 +284,149 @@
 
   .home-titlebar > span {
     @apply text-xs text-muted-foreground;
+  }
+
+  .home-titlebar--presets {
+    @apply items-end;
+  }
+
+  .home-titlebar--presets > div > small {
+    @apply mt-1.5 block text-xs text-muted-foreground;
+  }
+
+  .role-preset-search {
+    @apply flex h-9 w-56 items-center gap-2 rounded-md border bg-white px-3 text-muted-foreground shadow-xs focus-within:ring-2 focus-within:ring-ring;
+  }
+
+  .role-preset-toolbar {
+    @apply flex items-center gap-2;
+  }
+
+  .role-preset-search > svg {
+    @apply size-3.5 shrink-0;
+  }
+
+  .role-preset-search > input {
+    @apply min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground;
+  }
+
+  .role-preset-grid {
+    @apply grid grid-cols-2 gap-3;
+  }
+
+  .role-preset-card {
+    @apply relative min-h-32 rounded-lg border bg-white shadow-xs transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md;
+  }
+
+  .role-preset-card__main {
+    @apply flex size-full min-h-32 items-start gap-3 p-4 pr-14 text-left focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  .role-preset-card__icon {
+    @apply grid size-9 shrink-0 place-items-center rounded-md;
+  }
+
+  .role-preset-card__icon > svg {
+    @apply size-4;
+  }
+
+  .role-preset-card__icon[data-tone="amber"] {
+    @apply bg-amber-100 text-amber-700;
+  }
+
+  .role-preset-card__icon[data-tone="blue"] {
+    @apply bg-sky-100 text-sky-700;
+  }
+
+  .role-preset-card__icon[data-tone="green"] {
+    @apply bg-emerald-100 text-emerald-700;
+  }
+
+  .role-preset-card__icon[data-tone="rose"] {
+    @apply bg-rose-100 text-rose-700;
+  }
+
+  .role-preset-card__content {
+    @apply min-w-0 flex-1;
+  }
+
+  .role-preset-card__content > small,
+  .role-preset-card__content > strong,
+  .role-preset-card__content > span {
+    @apply block;
+  }
+
+  .role-preset-card__content > small {
+    @apply mb-1 text-[9px] font-semibold uppercase text-muted-foreground;
+  }
+
+  .role-preset-card__content > strong {
+    @apply text-sm font-semibold;
+  }
+
+  .role-preset-card__content > span {
+    @apply mt-1.5 text-xs leading-5 text-muted-foreground;
+  }
+
+  .role-preset-card__main > svg {
+    @apply mt-2 size-4 shrink-0 text-zinc-300;
+  }
+
+  .role-preset-card__actions {
+    @apply absolute right-2 top-2 flex items-center;
+  }
+
+  .role-preset-card__actions svg {
+    @apply size-3.5;
+  }
+
+  .role-preset-dialog-backdrop {
+    @apply fixed inset-0 z-50 grid place-items-center bg-black/30 p-4 backdrop-blur-[2px];
+  }
+
+  .role-preset-dialog {
+    @apply grid max-h-[calc(100dvh-32px)] w-full max-w-xl gap-4 overflow-y-auto rounded-lg border bg-white p-5 shadow-2xl;
+  }
+
+  .role-preset-dialog > header {
+    @apply flex items-start gap-3 border-b pb-4;
+  }
+
+  .role-preset-dialog > header > span {
+    @apply grid size-9 shrink-0 place-items-center rounded-md bg-emerald-100 text-emerald-700;
+  }
+
+  .role-preset-dialog > header > span svg { @apply size-4; }
+  .role-preset-dialog > header > div { @apply min-w-0 flex-1; }
+  .role-preset-dialog h2 { @apply text-sm font-semibold; }
+  .role-preset-dialog header p { @apply mt-1 text-xs text-muted-foreground; }
+  .role-preset-dialog__grid { @apply grid grid-cols-2 gap-3; }
+  .role-preset-dialog > label,
+  .role-preset-dialog__grid label { @apply grid gap-1.5 text-xs font-medium; }
+  .role-preset-dialog input,
+  .role-preset-dialog select,
+  .role-preset-dialog textarea { @apply w-full rounded-md border bg-background px-3 py-2 text-xs font-normal outline-none focus:ring-2 focus:ring-ring; }
+  .role-preset-dialog input,
+  .role-preset-dialog select { @apply h-9; }
+  .role-preset-dialog textarea { @apply resize-y leading-5; }
+  .role-preset-dialog__prompt { @apply min-h-40 font-mono; }
+  .role-preset-dialog > p[role="alert"] { @apply rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700; }
+  .role-preset-dialog > footer { @apply flex justify-end gap-2 border-t pt-4; }
+
+  .role-preset-empty {
+    @apply flex min-h-60 flex-col items-center justify-center rounded-lg border border-dashed bg-white/40 text-center;
+  }
+
+  .role-preset-empty > svg {
+    @apply mb-3 size-8 text-zinc-300;
+  }
+
+  .role-preset-empty > strong {
+    @apply text-sm;
+  }
+
+  .role-preset-empty > span {
+    @apply mt-1 text-xs text-muted-foreground;
   }
 
   .workspace-grid {
@@ -1176,6 +1426,14 @@
     @apply w-32;
   }
 
+  .team-composer__member .team-composer__role-select {
+    @apply w-36;
+  }
+
+  .team-role-preset-select {
+    @apply h-9 w-full rounded-md border bg-background px-2.5 text-xs outline-none focus:ring-2 focus:ring-ring;
+  }
+
   .agent-team-shape__identity {
     @apply min-w-0 flex-1;
   }
@@ -1303,6 +1561,26 @@
 
   .team-member-add {
     @apply mb-3 grid grid-cols-[1fr_1fr_auto] gap-1.5 rounded-md border bg-zinc-50 p-2;
+  }
+
+  .team-member-add__role {
+    grid-column: 1 / 2;
+    grid-row: 2;
+  }
+
+  .team-member-add > input {
+    grid-column: 1 / 3;
+  }
+
+  .team-member-add__role + select {
+    grid-column: 2 / 3;
+    grid-row: 2;
+  }
+
+  .team-member-add > button {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    align-self: stretch;
   }
 
   .team-member-add input,
@@ -1458,14 +1736,67 @@
   }
 }
 
+.home-header .home-sidebar-trigger {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .home-header {
-    @apply px-3;
+    @apply justify-between px-3;
   }
 
-  .home-brand strong,
-  .home-header__actions > a {
+  .home-header__leading {
+    @apply flex;
+  }
+
+  .home-header .home-sidebar-trigger {
+    display: inline-flex;
+  }
+
+  .home-brand strong {
     @apply hidden;
+  }
+
+  .home-shell {
+    @apply block;
+  }
+
+  .home-sidebar {
+    @apply fixed bottom-0 left-0 top-0 z-50 h-dvh w-[280px] bg-zinc-100 px-3 py-5 shadow-xl transition-transform;
+    transform: translateX(var(--home-sidebar-translate, -100%)) !important;
+  }
+
+  .home-sidebar__header {
+    @apply mb-8 px-1;
+  }
+
+  .home-sidebar__collapse {
+    @apply hidden;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-sidebar__brand {
+    @apply flex;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-nav > button {
+    @apply justify-start px-3;
+  }
+
+  .home-page[data-sidebar-collapsed="true"] .home-nav > button > span,
+  .home-page[data-sidebar-collapsed="true"] .home-nav > button > small,
+  .home-page[data-sidebar-collapsed="true"] .home-nav > button > svg:last-child:not(:first-child) {
+    @apply block;
+  }
+
+  .home-sidebar__scrim {
+    @apply fixed inset-0 z-40 block bg-black/25 transition-opacity;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .home-sidebar__scrim[data-open="true"] {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .home-content {
@@ -1477,6 +1808,18 @@
   }
 
   .workspace-grid {
+    @apply grid-cols-1;
+  }
+
+  .home-titlebar--presets {
+    @apply grid gap-4;
+  }
+
+  .role-preset-search {
+    @apply w-full;
+  }
+
+  .role-preset-grid {
     @apply grid-cols-1;
   }
 
@@ -1512,8 +1855,20 @@
 }
 
 @media (min-width: 641px) and (max-width: 900px) {
+  .home-shell {
+    @apply grid-cols-[200px_minmax(0,1fr)];
+  }
+
+  .home-content {
+    @apply px-5;
+  }
+
   .workspace-grid {
     @apply grid-cols-2;
+  }
+
+  .role-preset-grid {
+    @apply grid-cols-1;
   }
 }
 

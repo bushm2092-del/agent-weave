@@ -17,6 +17,7 @@ export const teamMemberSchema = z.object({
   role: teamMemberRoleSchema,
   agent: agentProviderSchema,
   model: z.string().optional(),
+  rolePresetId: z.string().uuid().optional(),
   runtimeStatus: teamMemberRuntimeStatusSchema,
   workStatus: teamMemberWorkStatusSchema,
   error: z.string().optional(),

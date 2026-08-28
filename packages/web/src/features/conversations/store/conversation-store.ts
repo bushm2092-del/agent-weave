@@ -7,8 +7,9 @@ import { applyConversationEvent } from "@/features/conversations/store/apply-con
 
 type ConversationStore = {
   conversations: Record<string, ConversationView>
-  prepareReplay: (conversation: Conversation) => void
+  prepareReplay: (conversation: Conversation, runs?: Run[]) => void
   applyEvent: (event: ConversationEvent) => void
+  applyEvents: (events: ConversationEvent[]) => void
   upsertRun: (run: Run) => void
   setConnectionStatus: (conversationId: string, status: ConversationConnectionStatus) => void
   setError: (conversationId: string, error?: string) => void
@@ -29,7 +30,7 @@ function emptyView(): ConversationView {
 export const useConversationStore = create<ConversationStore>()(
   immer((set) => ({
     conversations: {},
-    prepareReplay: (conversation) => {
+    prepareReplay: (conversation, runs = []) => {
       set((state) => {
         const current = state.conversations[conversation.id]
         if (current?.lastSequence) {
@@ -40,6 +41,7 @@ export const useConversationStore = create<ConversationStore>()(
         state.conversations[conversation.id] = {
           ...emptyView(),
           conversation,
+          runs,
           connectionStatus: "connecting",
           loading: false,
         }
@@ -53,6 +55,19 @@ export const useConversationStore = create<ConversationStore>()(
         }
         const view = (state.conversations[event.conversationId] ??= emptyView())
         applyConversationEvent(view, event)
+      })
+    },
+    applyEvents: (events) => {
+      if (!events.length) return
+      set((state) => {
+        for (const event of events) {
+          if (event.type === "conversation.deleted") {
+            delete state.conversations[event.conversationId]
+            continue
+          }
+          const view = (state.conversations[event.conversationId] ??= emptyView())
+          applyConversationEvent(view, event)
+        }
       })
     },
     upsertRun: (run) => {

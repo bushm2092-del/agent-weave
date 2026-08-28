@@ -4,6 +4,7 @@ import { CanvasError } from "../../features/canvases/canvas.errors.js"
 import { AgentGatewayError } from "../../features/conversations/gateways/agent.gateway.js"
 import { ConversationError } from "../../features/conversations/conversation.errors.js"
 import { FileApiError } from "../../features/files/file.errors.js"
+import { RolePresetError } from "../../features/role-presets/role-preset.errors.js"
 import { TeamError } from "../../features/teams/team.errors.js"
 import { HttpError } from "./http-error.js"
 
@@ -42,6 +43,10 @@ export function mapHttpError(error: unknown): MappedHttpError {
   }
 
   if (error instanceof FileApiError) {
+    return { status: error.status, code: error.code, message: error.message }
+  }
+
+  if (error instanceof RolePresetError) {
     return { status: error.status, code: error.code, message: error.message }
   }
 

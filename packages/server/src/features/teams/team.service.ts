@@ -16,11 +16,13 @@ import type {
   TeamRun,
   TeamSpawnRequest,
   UpdateTeamRequest,
+  RolePreset,
 } from "@agent-weave/contracts"
 import { agentProviderSchema, teamTaskStatusSchema } from "@agent-weave/contracts"
 import { z } from "zod"
 import { environment } from "../../config/index.js"
 import { conversationService, type ManagedConversationInput } from "../conversations/index.js"
+import { rolePresetService } from "../role-presets/index.js"
 import { TeamError } from "./team.errors.js"
 import { teamEventBus, type TeamEventBus } from "./team-event-bus.js"
 import type { StoredTeamMember, StoredTeamMessage, StoredWorkIntent, TeamRepository } from "./team.models.js"
@@ -52,6 +54,10 @@ export interface TeamConversationPort {
   waitUntilReady(conversationId: string): Promise<Conversation>
 }
 
+export interface TeamRolePresetPort {
+  get(id: string): RolePreset
+}
+
 export class TeamService {
   private readonly processingSlots = new Set<string>()
   private readonly mutationTails = new Map<string, Promise<void>>()
@@ -61,6 +67,7 @@ export class TeamService {
     private readonly conversations: TeamConversationPort,
     private readonly eventBus: TeamEventBus,
     private readonly toolCalls: TeamToolCallRepository = new MemoryTeamToolCallRepository(),
+    private readonly rolePresets: TeamRolePresetPort = rolePresetService,
   ) {}
 
   async create(input: CreateTeamRequest): Promise<CreatedTeam> {
@@ -100,6 +107,7 @@ export class TeamService {
           name: member.name,
           agent: member.agent,
           ...(member.model ? { model: member.model } : {}),
+          ...(member.rolePresetId ? { rolePresetId: member.rolePresetId } : {}),
         })
         createdMembers.push({ slotId: created.slotId, conversationId: created.conversationId })
       }
@@ -186,6 +194,7 @@ export class TeamService {
       name: input.name,
       agent: input.agent,
       ...(input.model ? { model: input.model } : {}),
+      ...(input.rolePresetId ? { rolePresetId: input.rolePresetId } : {}),
     })
   }
 
@@ -540,7 +549,7 @@ export class TeamService {
       for (const member of this.repository.listMembers(team.id)) {
         this.conversations.configureManagedSession(member.conversationId, member.slotId, {
           ...(member.model ? { model: member.model } : {}),
-          systemPrompt: teamRolePrompt({ teamId: team.id, teamName: team.name, member: publicMember(member) }),
+          systemPrompt: memberSystemPrompt(team.id, team.name, member),
           mcpServers: [teamMcpServer(member.mcpToken, member.role)],
         })
       }
@@ -695,8 +704,10 @@ export class TeamService {
     name: string
     agent: AddTeamMemberRequest["agent"]
     model?: string
+    rolePresetId?: string
   }): Promise<TeamMember> {
     const mcpToken = randomBytes(32).toString("base64url")
+    const rolePrompt = input.rolePresetId ? this.rolePresets.get(input.rolePresetId).systemPrompt : undefined
     const memberDraft: TeamMember = {
       slotId: input.slotId,
       teamId: input.teamId,
@@ -705,6 +716,7 @@ export class TeamService {
       role: input.role,
       agent: input.agent,
       ...(input.model ? { model: input.model } : {}),
+      ...(input.rolePresetId ? { rolePresetId: input.rolePresetId } : {}),
       runtimeStatus: "pending",
       workStatus: "idle",
       createdAt: new Date().toISOString(),
@@ -716,7 +728,10 @@ export class TeamService {
       owner: { kind: "team_member", id: input.slotId },
       sessionContext: {
         ...(input.model ? { model: input.model } : {}),
-        systemPrompt: teamRolePrompt({ teamId: input.teamId, teamName: input.teamName, member: memberDraft }),
+        systemPrompt: memberSystemPrompt(input.teamId, input.teamName, {
+          ...memberDraft,
+          ...(rolePrompt ? { rolePrompt } : {}),
+        }),
         mcpServers: [teamMcpServer(mcpToken, input.role)],
       },
     })
@@ -730,6 +745,8 @@ export class TeamService {
         role: input.role,
         agent: input.agent,
         ...(input.model ? { model: input.model } : {}),
+        ...(input.rolePresetId ? { rolePresetId: input.rolePresetId } : {}),
+        ...(rolePrompt ? { rolePrompt } : {}),
         mcpToken,
         runtimeStatus: "pending",
         workStatus: "idle",
@@ -1047,8 +1064,14 @@ export class TeamService {
 }
 
 function publicMember(member: StoredTeamMember): TeamMember {
-  const { mcpToken: _mcpToken, ...value } = member
+  const { mcpToken: _mcpToken, rolePrompt: _rolePrompt, ...value } = member
   return value
+}
+
+function memberSystemPrompt(teamId: string, teamName: string, member: TeamMember & { rolePrompt?: string }): string {
+  const { rolePrompt, ...publicValue } = member
+  const collaborationPrompt = teamRolePrompt({ teamId, teamName, member: publicValue })
+  return rolePrompt ? `${collaborationPrompt}\n\nRole preset:\n${rolePrompt}` : collaborationPrompt
 }
 
 function teamMcpServer(

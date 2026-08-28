@@ -11,6 +11,7 @@ import { SqliteConversationRepository } from "../../src/features/conversations/p
 import { TeamEventBus } from "../../src/features/teams/team-event-bus.js"
 import { SqliteTeamRepository } from "../../src/features/teams/persistence/sqlite-team.repository.js"
 import { TeamService } from "../../src/features/teams/team.service.js"
+import type { TeamRolePresetPort } from "../../src/features/teams/team.service.js"
 
 const temporaryDirectories: string[] = []
 
@@ -19,6 +20,37 @@ afterEach(async () => {
 })
 
 describe("TeamService", () => {
+  it("injects and persists the selected role preset for a member", async () => {
+    const presetId = "55555555-5555-4555-8555-555555555555"
+    const rolePresets: TeamRolePresetPort = {
+      get: () => ({
+        id: presetId,
+        name: "Security reviewer",
+        description: "Reviews security risks.",
+        category: "Review",
+        agent: "codex",
+        systemPrompt: "Inspect trust boundaries and attack paths.",
+        builtIn: false,
+        createdAt: "2026-08-28T00:00:00.000Z",
+        updatedAt: "2026-08-28T00:00:00.000Z",
+      }),
+    }
+    const harness = await createHarness(undefined, rolePresets)
+    const team = await harness.service.create({
+      canvasId: "canvas-role",
+      name: "Security team",
+      workspace: harness.workspace,
+      leader: { name: "Lead", agent: "codex", rolePresetId: presetId },
+      members: [],
+    })
+
+    const stored = harness.teamRepository.getMember(team.id, team.leaderSlotId)!
+    const conversation = harness.conversationRepository.getConversation(stored.conversationId)!
+    assert.equal(stored.rolePresetId, presetId)
+    assert.match(conversation.sessionContext.systemPrompt!, /Inspect trust boundaries and attack paths/)
+    assert.match(conversation.sessionContext.systemPrompt!, /team leader/)
+  })
+
   it("provisions independent member conversations and completes a team run", async () => {
     const harness = await createHarness()
     const team = await harness.service.create({
@@ -481,7 +513,7 @@ describe("TeamService", () => {
   })
 })
 
-async function createHarness(run?: AgentGateway["run"]) {
+async function createHarness(run?: AgentGateway["run"], rolePresets?: TeamRolePresetPort) {
   const workspace = await mkdtemp(join(tmpdir(), "agent-weave-team-"))
   temporaryDirectories.push(workspace)
   const database = new DatabaseSync(":memory:")
@@ -494,7 +526,7 @@ async function createHarness(run?: AgentGateway["run"]) {
     conversationRepository,
     new ConversationEventBus(conversationRepository),
   )
-  const service = new TeamService(teamRepository, conversations, new TeamEventBus(teamRepository))
+  const service = new TeamService(teamRepository, conversations, new TeamEventBus(teamRepository), undefined, rolePresets)
   return { database, workspace, conversations, conversationRepository, gateway, service, teamRepository }
 }
 

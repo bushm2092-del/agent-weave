@@ -68,6 +68,36 @@ describe("ConversationService", () => {
     assert.equal(completed?.assistantText, "Done")
     assert.equal(completed?.thoughtText, "thinking")
     assert.equal(service.get(created.id).sessionState, "created")
+    assert.equal(
+      service.eventsAfter(created.id, 0).some(
+        (event) => event.type === "assistant.delta" || event.type === "thought.delta",
+      ),
+      false,
+    )
+  })
+
+  it("streams text deltas without persisting token events", async () => {
+    const workspace = await mkdtemp(join(tmpdir(), "agent-weave-"))
+    temporaryDirectories.push(workspace)
+    const repository = createMemoryConversationRepository()
+    const eventBus = new ConversationEventBus(repository)
+    const service = new ConversationService(createGateway(), repository, eventBus)
+    const created = await service.create({ agent: "codex", workspace })
+    await waitFor(() => service.get(created.id).status === "ready")
+    const received: string[] = []
+    const unsubscribe = service.subscribe(created.id, (event) => {
+      if (event.type === "assistant.delta" || event.type === "thought.delta") {
+        assert.equal(event.transient, true)
+        received.push(event.type)
+      }
+    })
+
+    await service.createRun(created.id, { message: "Inspect", attachments: [] })
+    await waitFor(() => service.listRuns(created.id)[0]?.status === "completed")
+    unsubscribe()
+
+    assert.deepEqual(received, ["thought.delta", "assistant.delta"])
+    assert.equal(service.listRuns(created.id)[0]?.assistantText, "Done")
   })
 
   it("deletes conversation state when the window is closed", async () => {

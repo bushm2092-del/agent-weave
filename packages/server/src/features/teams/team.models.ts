@@ -22,7 +22,7 @@ export type StoredTeam = Omit<Team, "members" | "tasks" | "spawnRequests" | "act
   lifecycleStatus: TeamLifecycleStatus
   controlTokenHash: string
 }
-export type StoredTeamMember = TeamMember & { mcpToken: string }
+export type StoredTeamMember = TeamMember & { mcpToken: string; rolePrompt?: string }
 export type StoredTeamRun = TeamRun
 
 export type StoredTeamMessage = {
@@ -74,6 +74,8 @@ export type CreateTeamMemberRecord = {
   role: TeamMemberRole
   agent: AgentProvider
   model?: string
+  rolePresetId?: string
+  rolePrompt?: string
   mcpToken: string
   runtimeStatus: TeamMemberRuntimeStatus
   workStatus: TeamMemberWorkStatus

@@ -335,8 +335,8 @@ export function CanvasPage() {
         canvasId,
         name: draft.name,
         workspace: draft.workspace,
-        leader: { name: draft.leader.name, agent: AGENT_RUNNERS[draft.leader.runner].provider },
-        members: draft.members.map((member) => ({ name: member.name, agent: AGENT_RUNNERS[member.runner].provider })),
+        leader: { name: draft.leader.name, agent: AGENT_RUNNERS[draft.leader.runner].provider, ...(draft.leader.rolePresetId ? { rolePresetId: draft.leader.rolePresetId } : {}) },
+        members: draft.members.map((member) => ({ name: member.name, agent: AGENT_RUNNERS[member.runner].provider, ...(member.rolePresetId ? { rolePresetId: member.rolePresetId } : {}) })),
       })
       try {
         teamController.prepare(team)

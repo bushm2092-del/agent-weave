@@ -7,6 +7,7 @@ export const teamMemberInputSchema = z.object({
   name: z.string().trim().min(1).max(80),
   agent: agentProviderSchema,
   model: z.string().trim().min(1).max(200).optional(),
+  rolePresetId: z.string().uuid().optional(),
 })
 
 export const createTeamRequestSchema = z.object({

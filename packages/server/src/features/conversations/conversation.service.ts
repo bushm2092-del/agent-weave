@@ -480,7 +480,11 @@ export class ConversationService implements ConversationServicePort {
         createdAt: new Date().toISOString(),
       })
     }
-    this.eventBus.publish({ conversationId, runId, type: event.type, data: event.data })
+    if (event.type === "assistant.delta" || event.type === "thought.delta") {
+      this.eventBus.publishTransient({ conversationId, runId, type: event.type, data: event.data })
+    } else {
+      this.eventBus.publish({ conversationId, runId, type: event.type, data: event.data })
+    }
   }
 
   private requireConversation(conversationId: string): StoredConversation {

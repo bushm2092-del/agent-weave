@@ -1,8 +1,10 @@
+import type { RolePreset } from "@agent-weave/contracts"
 import { Activity, Check, ListTodo, Plus, Trash2, Users, X } from "lucide-react"
-import { useId, useState, type KeyboardEvent, type ReactNode } from "react"
+import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { AGENT_RUNNERS, AGENT_RUNNER_IDS, type AgentRunner } from "@/features/canvas/agent-options"
 import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
+import { rolePresetApi } from "@/features/role-presets"
 import { teamApi } from "@/features/teams/api"
 import { teamController } from "@/features/teams/lifecycle"
 import { useTeamStore } from "@/features/teams/store"
@@ -19,11 +21,17 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
   const [addingMember, setAddingMember] = useState(false)
   const [name, setName] = useState("")
   const [runner, setRunner] = useState<AgentRunner>("codex")
+  const [rolePresetId, setRolePresetId] = useState("")
+  const [rolePresets, setRolePresets] = useState<RolePreset[]>([])
   const [removingSlotIds, setRemovingSlotIds] = useState<Set<string>>(() => new Set())
   const [resolvingRequestIds, setResolvingRequestIds] = useState<Set<string>>(() => new Set())
   const [error, setError] = useState<string>()
   const inspectorId = useId()
   const team = view?.team
+
+  useEffect(() => {
+    void rolePresetApi.list().then(setRolePresets).catch(() => undefined)
+  }, [])
 
   const refresh = () => {
     void teamController.refresh(teamId).catch(() => undefined)
@@ -34,8 +42,13 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
     setAddingMember(true)
     setError(undefined)
     try {
-      await teamApi.addMember(teamId, { name: name.trim(), agent: AGENT_RUNNERS[runner].provider })
+      await teamApi.addMember(teamId, {
+        name: name.trim(),
+        agent: AGENT_RUNNERS[runner].provider,
+        ...(rolePresetId ? { rolePresetId } : {}),
+      })
       setName("")
+      setRolePresetId("")
       setAdding(false)
       refresh()
     } catch (requestError) {
@@ -224,6 +237,21 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                   Member runner
                 </label>
                 <select
+                  aria-label="Member role preset"
+                  className="team-member-add__role"
+                  disabled={addingMember}
+                  value={rolePresetId}
+                  onChange={(event) => {
+                    const nextId = event.target.value
+                    setRolePresetId(nextId)
+                    const preset = rolePresets.find((item) => item.id === nextId)
+                    if (preset) setRunner(providerRunner(preset.agent))
+                  }}
+                >
+                  <option value="">No role</option>
+                  {rolePresets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+                </select>
+                <select
                   disabled={addingMember}
                   id={`${inspectorId}-member-runner`}
                   value={runner}
@@ -255,7 +283,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                     <div>
                       <strong>{member.name}</strong>
                       <span>
-                        {member.role} · {runnerInfo.label}
+                        {member.role} · {rolePresets.find((preset) => preset.id === member.rolePresetId)?.name ?? runnerInfo.label}
                       </span>
                     </div>
                     <span

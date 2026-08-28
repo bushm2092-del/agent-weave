@@ -81,9 +81,9 @@ export function createConversationRouter(service: ConversationServicePort = conv
     const unsubscribe = service.subscribe(conversationId, (event) => {
       if (replaying) {
         bufferedEvents.push(event)
-      } else if (event.sequence > cursor) {
+      } else if (event.transient || event.sequence > cursor) {
         writeEvent(response, event)
-        cursor = event.sequence
+        if (!event.transient) cursor = event.sequence
       }
     })
     let replayEvents: ConversationEvent[]
@@ -95,15 +95,15 @@ export function createConversationRouter(service: ConversationServicePort = conv
     }
     startEventStream(response)
     for (const event of replayEvents) {
-      if (event.sequence <= cursor) continue
+      if (!event.transient && event.sequence <= cursor) continue
       writeEvent(response, event)
-      cursor = event.sequence
+      if (!event.transient) cursor = event.sequence
     }
     replaying = false
     for (const event of bufferedEvents) {
-      if (event.sequence <= cursor) continue
+      if (!event.transient && event.sequence <= cursor) continue
       writeEvent(response, event)
-      cursor = event.sequence
+      if (!event.transient) cursor = event.sequence
     }
     const heartbeat = setInterval(() => response.write(": heartbeat\n\n"), 15_000)
     request.once("close", () => {
@@ -125,7 +125,7 @@ function startEventStream(response: Response): void {
 }
 
 function writeEvent(response: Response, event: ConversationEvent): void {
-  response.write(`id: ${event.sequence}\n`)
+  if (!event.transient) response.write(`id: ${event.sequence}\n`)
   response.write(`event: ${event.type}\n`)
   response.write(`data: ${JSON.stringify(event)}\n\n`)
 }

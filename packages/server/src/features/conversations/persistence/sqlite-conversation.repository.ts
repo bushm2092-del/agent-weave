@@ -205,7 +205,12 @@ export class SqliteConversationRepository implements ConversationRepository {
 
   listEventsAfter(conversationId: string, sequence: number): ConversationEvent[] {
     return this.database
-      .prepare("SELECT * FROM conversation_events WHERE conversation_id = ? AND sequence > ? ORDER BY sequence")
+      .prepare(
+        `SELECT * FROM conversation_events
+         WHERE conversation_id = ? AND sequence > ?
+           AND type NOT IN ('assistant.delta', 'thought.delta')
+         ORDER BY sequence`,
+      )
       .all(conversationId, sequence)
       .map(mapEvent)
   }

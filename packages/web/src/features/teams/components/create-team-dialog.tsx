@@ -1,14 +1,16 @@
+import type { RolePreset } from "@agent-weave/contracts"
 import { FolderOpen, Plus, Trash2, Users, X } from "lucide-react"
-import { useId, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { AGENT_RUNNERS, AGENT_RUNNER_IDS, type AgentRunner } from "@/features/canvas/agent-options"
 import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
+import { rolePresetApi } from "@/features/role-presets"
 
 export type TeamDraft = {
   name: string
   workspace: string
-  leader: { name: string; runner: AgentRunner }
-  members: Array<{ name: string; runner: AgentRunner }>
+  leader: { name: string; runner: AgentRunner; rolePresetId?: string }
+  members: Array<{ name: string; runner: AgentRunner; rolePresetId?: string }>
 }
 
 export function CreateTeamDialog({
@@ -22,10 +24,22 @@ export function CreateTeamDialog({
   const [workspace, setWorkspace] = useState("")
   const [leaderName, setLeaderName] = useState("Lead")
   const [leaderRunner, setLeaderRunner] = useState<AgentRunner>("codex")
+  const [leaderRolePresetId, setLeaderRolePresetId] = useState("")
   const [members, setMembers] = useState<TeamDraft["members"]>([])
+  const [rolePresets, setRolePresets] = useState<RolePreset[]>([])
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string>()
   const titleId = useId()
+
+  useEffect(() => {
+    void rolePresetApi.list().then(setRolePresets).catch(() => setError("Unable to load role presets."))
+  }, [])
+
+  const selectLeaderPreset = (presetId: string) => {
+    setLeaderRolePresetId(presetId)
+    const preset = rolePresets.find((item) => item.id === presetId)
+    if (preset) setLeaderRunner(runnerForProvider(preset.agent))
+  }
 
   const create = async () => {
     if (creating) return
@@ -35,7 +49,7 @@ export function CreateTeamDialog({
       await onCreate({
         name: name.trim(),
         workspace: workspace.trim(),
-        leader: { name: leaderName.trim(), runner: leaderRunner },
+        leader: { name: leaderName.trim(), runner: leaderRunner, ...(leaderRolePresetId ? { rolePresetId: leaderRolePresetId } : {}) },
         members: members.map((member) => ({ ...member, name: member.name.trim() })),
       })
     } catch (createError) {
@@ -70,6 +84,14 @@ export function CreateTeamDialog({
           Leader name
           <input disabled={creating} value={leaderName} onChange={(event) => setLeaderName(event.target.value)} />
         </label>
+      </div>
+
+      <div className="agent-composer__field">
+        <label htmlFor="leader-role-preset">Leader role</label>
+        <select id="leader-role-preset" className="team-role-preset-select" disabled={creating} value={leaderRolePresetId} onChange={(event) => selectLeaderPreset(event.target.value)}>
+          <option value="">No role preset</option>
+          {rolePresets.map((preset) => <option key={preset.id} value={preset.id}>{preset.category} · {preset.name}</option>)}
+        </select>
       </div>
 
       <div className="agent-composer__field">
@@ -120,6 +142,24 @@ export function CreateTeamDialog({
                 )
               }
             />
+            <select
+              className="team-composer__role-select"
+              disabled={creating}
+              value={member.rolePresetId ?? ""}
+              aria-label={`Teammate ${index + 1} role preset`}
+              onChange={(event) => {
+                const rolePresetId = event.target.value
+                const preset = rolePresets.find((item) => item.id === rolePresetId)
+                setMembers((current) => current.map((item, itemIndex) => itemIndex === index ? {
+                  ...item,
+                  ...(rolePresetId ? { rolePresetId } : { rolePresetId: undefined }),
+                  ...(preset ? { runner: runnerForProvider(preset.agent) } : {}),
+                } : item))
+              }}
+            >
+              <option value="">No role</option>
+              {rolePresets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+            </select>
             <select
               disabled={creating}
               value={member.runner}
@@ -178,6 +218,10 @@ export function CreateTeamDialog({
       </div>
     </section>
   )
+}
+
+function runnerForProvider(provider: RolePreset["agent"]): AgentRunner {
+  return AGENT_RUNNER_IDS.find((id) => AGENT_RUNNERS[id].provider === provider) ?? "codex"
 }
 
 function RunnerPicker({

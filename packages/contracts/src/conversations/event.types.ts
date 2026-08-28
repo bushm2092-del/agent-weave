@@ -21,6 +21,7 @@ export const conversationEventTypeSchema = z.enum([
 
 export const conversationEventSchema = z.object({
   sequence: z.number().int().nonnegative(),
+  transient: z.boolean().optional(),
   id: z.string().uuid(),
   conversationId: z.string().uuid(),
   runId: z.string().uuid().optional(),

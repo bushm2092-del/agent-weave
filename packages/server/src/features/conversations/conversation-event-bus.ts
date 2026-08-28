@@ -27,6 +27,26 @@ export class ConversationEventBus {
     return event
   }
 
+  publishTransient(input: {
+    conversationId: string
+    runId?: string
+    type: ConversationEventType
+    data: unknown
+  }): ConversationEvent {
+    const event: ConversationEvent = {
+      sequence: 0,
+      transient: true,
+      id: randomUUID(),
+      conversationId: input.conversationId,
+      ...(input.runId ? { runId: input.runId } : {}),
+      type: input.type,
+      data: input.data,
+      createdAt: new Date().toISOString(),
+    }
+    for (const listener of this.listeners.get(input.conversationId) ?? []) listener(event)
+    return event
+  }
+
   subscribe(conversationId: string, listener: EventListener): () => void {
     const listeners = this.listeners.get(conversationId) ?? new Set<EventListener>()
     listeners.add(listener)
