@@ -64,20 +64,21 @@ export function CanvasPage() {
             setComposerOpen(false)
             setTeamComposerOpen(true)
           }}
-          onCreateFilePreview={() => {
+          onCreateFilePreview={(canvasEditor) => {
             const input = document.createElement("input")
             input.type = "file"
             input.accept = "image/*,.md,.markdown,.txt,.csv,.pdf,.xlsx,.xls,.docx,.doc"
             input.onchange = () => {
               const file = input.files?.[0]
-              if (!file || !editor) return
+              if (!file) return
               const reader = new FileReader()
               reader.onload = () => {
-                const center = editor.getViewportPageBounds().center
+                const center = canvasEditor.getViewportPageBounds().center
                 const id = createShapeId()
-                editor.createShape({ id, type: "file-preview", x: center.x - 180, y: center.y - 140, props: { name: file.name, mimeType: file.type || "application/octet-stream", dataUrl: String(reader.result), w: 360, h: 280 } })
-                editor.select(id)
+                canvasEditor.createShape({ id, type: "file-preview", x: center.x - 180, y: center.y - 140, props: { name: file.name, mimeType: file.type || "application/octet-stream", dataUrl: String(reader.result), w: 360, h: 280 } })
+                canvasEditor.select(id)
               }
+              reader.onerror = () => setCanvasError(`Unable to read ${file.name}.`)
               reader.readAsDataURL(file)
             }
             input.click()
