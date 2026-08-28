@@ -1,4 +1,4 @@
-import { ArrowLeft, Eye, Focus, Settings } from "lucide-react"
+import { ArrowLeft, Eye, Focus, FolderTree, Settings } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router"
 import {
@@ -48,10 +48,15 @@ export function CanvasPage() {
   const [composerOpen, setComposerOpen] = useState(false)
   const [teamComposerOpen, setTeamComposerOpen] = useState(false)
   const [cleanUi, setCleanUi] = useState(false)
+  const [fileSidebarOpen, setFileSidebarOpen] = useState(false)
   const [canvasName, setCanvasName] = useState("Untitled canvas")
   const [canvasError, setCanvasError] = useState<string>()
   const selectedAgent = useSingleSelectedAgent(editor)
   const selectedTeam = useSingleSelectedTeam(editor)
+
+  useEffect(() => {
+    if (!selectedAgent) setFileSidebarOpen(false)
+  }, [selectedAgent])
   const tldrawComponents = useMemo<TLComponents>(() => {
     function Toolbar() {
       return (
@@ -399,7 +404,7 @@ export function CanvasPage() {
       className="canvas-page relative h-dvh w-dvw overflow-hidden bg-background"
       data-clean-ui={cleanUi}
     >
-      <div className="canvas-stage" data-file-sidebar-open={Boolean(selectedAgent || selectedTeam)}>
+      <div className="canvas-stage" data-file-sidebar-open={Boolean(fileSidebarOpen && selectedAgent)}>
         <Tldraw
           key={canvasId}
           components={tldrawComponents}
@@ -412,6 +417,8 @@ export function CanvasPage() {
       {!cleanUi && selectedAgent && (
         <FileSidebar
           key={`${selectedAgent.id}:${selectedAgent.props.workspace}`}
+          open={fileSidebarOpen}
+          onClose={() => setFileSidebarOpen(false)}
           workspace={selectedAgent.props.workspace}
         />
       )}
@@ -440,6 +447,18 @@ export function CanvasPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {selectedAgent && (
+            <Button
+              size="icon-sm"
+              variant={fileSidebarOpen ? "secondary" : "ghost"}
+              aria-expanded={fileSidebarOpen}
+              aria-label={fileSidebarOpen ? "Hide agent files" : "Show agent files"}
+              title={fileSidebarOpen ? "Hide agent files" : "Show agent files"}
+              onClick={() => setFileSidebarOpen((open) => !open)}
+            >
+              <FolderTree />
+            </Button>
+          )}
           <Button size="icon-sm" variant="ghost" aria-label="Workspace settings">
             <Settings />
           </Button>

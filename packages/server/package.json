@@ -3,6 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./embedded": {
+      "types": "./dist/embedded.d.ts",
+      "default": "./dist/embedded.js"
+    }
+  },
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch --import=tsx src/index.ts",
     "build": "tsc -p tsconfig.build.json",

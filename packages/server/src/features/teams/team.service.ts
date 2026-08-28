@@ -1089,6 +1089,7 @@ function teamMcpServer(
     command: process.execPath,
     args: bridgeArgs,
     env: {
+      ...(process.versions.electron ? { ELECTRON_RUN_AS_NODE: "1" } : {}),
       AGENT_WEAVE_TEAM_API: `http://${host}:${environment.port}/api/v1/internal/team-tools`,
       AGENT_WEAVE_TEAM_TOKEN: token,
       AGENT_WEAVE_TEAM_ROLE: role,

@@ -18,7 +18,10 @@ for (let attempt = 0; attempt < 10; attempt += 1) {
 const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm"
 const server = spawn(pnpm, ["--filter", "@agent-weave/server", "dev"], {
   stdio: "inherit",
-  env: process.env,
+  env: {
+    ...process.env,
+    ACPX_CLAUDE_INCLUDE_USER_SETTINGS: process.env.ACPX_CLAUDE_INCLUDE_USER_SETTINGS ?? "1",
+  },
 })
 
 for (const signal of ["SIGINT", "SIGTERM"]) {

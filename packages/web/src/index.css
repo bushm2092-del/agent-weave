@@ -311,7 +311,13 @@
 
   .file-sidebar {
     @apply absolute bottom-0 right-0 top-11 z-20 flex w-[300px] max-w-full flex-col border-l bg-background shadow-sm;
-    transition: top 160ms ease;
+    transition: top 160ms ease, transform 160ms ease, opacity 160ms ease;
+  }
+
+  .file-sidebar[data-open="false"] {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(100%);
   }
 
   .file-sidebar__header {
@@ -324,6 +330,15 @@
 
   .file-sidebar__header > div {
     @apply min-w-0;
+    flex: 1;
+  }
+
+  .file-sidebar__header > button {
+    @apply shrink-0;
+  }
+
+  .file-sidebar__header > button svg {
+    @apply size-3.5;
   }
 
   .file-sidebar__header strong,

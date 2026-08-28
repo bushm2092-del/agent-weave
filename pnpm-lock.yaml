@@ -26,6 +26,10 @@ importers:
         version: 7.0.2
 
   packages/desktop:
+    dependencies:
+      '@agent-weave/server':
+        specifier: workspace:*
+        version: link:../server
     devDependencies:
       '@types/node':
         specifier: ^24.13.3

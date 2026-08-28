@@ -228,10 +228,10 @@ export function HomePage() {
   }
 
   return (
-    <SidebarProvider className="min-h-dvh bg-background text-foreground" style={{ "--sidebar-width": "244px", "--sidebar-width-icon": "76px", "--sidebar-width-mobile": "280px" } as CSSProperties}>
+    <SidebarProvider className="min-h-dvh bg-background text-foreground" style={{ "--sidebar-width": "244px", "--sidebar-width-mobile": "280px" } as CSSProperties}>
         <HomeSidebar activeSection={activeSection} canvasCount={canvases.length} onSelect={selectSection} />
         <SidebarInset className="min-h-dvh min-w-0">
-          <header className="flex h-16 items-center justify-end border-b bg-white px-5 max-md:justify-between max-md:px-3">
+          <header className="flex h-11 items-center justify-end border-b bg-white px-2.5 max-md:justify-between">
             <div className="hidden items-center gap-2 max-md:flex">
               <SidebarTrigger className="hidden max-md:inline-flex" />
               <Link className="flex items-center gap-2.5 text-sm no-underline" to="/" aria-label="AgentWeave home">

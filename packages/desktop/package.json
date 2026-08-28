@@ -7,12 +7,15 @@
   "scripts": {
     "predev": "pnpm --filter @agent-weave/contracts build",
     "dev": "concurrently -k -s first \"node scripts/ensure-server.mjs\" \"pnpm --filter @agent-weave/web dev --host 127.0.0.1\" \"wait-on http-get://127.0.0.1:5173 && cross-env ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron .\"",
-    "build": "pnpm --filter @agent-weave/web build && tsc -p tsconfig.json",
+    "build": "pnpm --filter @agent-weave/server build && pnpm --filter @agent-weave/web build && tsc -p tsconfig.json",
     "lint": "oxlint src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pack": "pnpm build && electron-builder --dir",
     "dist:mac": "pnpm build && electron-builder --mac",
     "dist:win": "pnpm build && electron-builder --win"
+  },
+  "dependencies": {
+    "@agent-weave/server": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
@@ -34,7 +37,11 @@
     },
     "files": [
       "dist/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/@agent-weave/server/.agent-weave/**/*",
+      "!node_modules/@agent-weave/server/src/**/*",
+      "!node_modules/@agent-weave/server/test/**/*",
+      "!node_modules/@agent-weave/server/.env.example"
     ],
     "extraResources": [
       {

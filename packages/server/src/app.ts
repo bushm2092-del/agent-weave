@@ -1,6 +1,7 @@
 import { apiSuccess } from "@agent-weave/contracts"
 import cors from "cors"
 import express from "express"
+import type { Express } from "express"
 import { pinoHttp } from "pino-http"
 import { environment } from "./config/index.js"
 import { canvasRouter } from "./features/canvases/index.js"
@@ -10,7 +11,7 @@ import { rolePresetRouter } from "./features/role-presets/index.js"
 import { teamRouter, teamToolRouter } from "./features/teams/index.js"
 import { errorHandler, getRequestId, notFoundHandler, requestContext } from "./http/index.js"
 
-export function createApp() {
+export function createApp(): Express {
   const app = express()
 
   app.disable("x-powered-by")
