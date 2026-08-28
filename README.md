@@ -122,6 +122,14 @@ The API is mounted under `/api/v1` and includes:
 
 Conversation and Team event streams support sequence cursors for reconnecting clients. Live content deltas are delivered as transient SSE events, while completed run content is stored as full blocks for efficient reloads.
 
+## Roadmap
+
+- **Stabilize the Web experience**: harden canvas persistence, Agent and Team lifecycle recovery, streaming reconnection, error handling, compatibility, and end-to-end test coverage.
+- **Reach Desktop feature parity**: keep macOS and Windows behavior aligned with the Web application, improve embedded-service reliability, environment detection, data migration, signing, packaging, and automatic updates.
+- **Real-time artifact updates**: stream Agent-created files and deliverables into the workspace, refresh previews as content changes, preserve artifact versions, and surface build and export status without manual reloads.
+- **Skills**: add reusable Skill discovery, installation, configuration, permission controls, and assignment to individual Agents, role presets, and Agent Teams.
+- **Office workflows**: support creating, reading, editing, previewing, and exporting Word documents, spreadsheets, presentations, and PDFs through Agent-assisted workflows.
+
 ## Quality Checks
 
 Run all repository checks from the project root:
