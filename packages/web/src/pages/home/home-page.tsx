@@ -69,15 +69,15 @@ function HomeSidebar({
   }
 
   return (
-    <Sidebar className="home-sidebar" collapsible="icon">
-      <SidebarHeader className="home-sidebar__header">
-        <Link className="home-sidebar__brand" to="/" aria-label="AgentWeave home">
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <Link to="/" aria-label="AgentWeave home">
           <img src="/icon.png" alt="" />
           <span><strong>AgentWeave</strong><small>Agent teamwork</small></span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup className="home-nav">
+        <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -226,7 +226,7 @@ export function HomePage() {
         <SidebarInset className="home-main">
           <header className="home-header">
             <div className="home-header__leading">
-              <SidebarTrigger className="home-sidebar-trigger" />
+              <SidebarTrigger />
               <Link className="home-brand" to="/" aria-label="AgentWeave home">
                 <img src="/icon.png" alt="" />
                 <strong>AgentWeave</strong>
