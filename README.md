@@ -146,6 +146,12 @@ pnpm build
 - [`docs/agent-team-product-interaction.md`](docs/agent-team-product-interaction.md): Agent Team product flows
 - [`docs/agent-team-code-architecture.md`](docs/agent-team-code-architecture.md): Agent Team implementation boundaries
 
+## Community
+
+Scan the QR code to join the AgentWeave WeChat group for product updates, usage discussions, and feedback. The invitation QR code is refreshed periodically.
+
+<img src="./img/agent-weave-wechat-group.jpg" alt="Join the AgentWeave WeChat group" width="360" />
+
 ## License
 
 No license has been declared yet. Until one is added, all rights are reserved by the repository owner.

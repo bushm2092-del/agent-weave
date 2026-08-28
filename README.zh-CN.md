@@ -146,6 +146,12 @@ pnpm build
 - [`docs/agent-team-product-interaction.md`](docs/agent-team-product-interaction.md)：Agent Team 产品交互流程
 - [`docs/agent-team-code-architecture.md`](docs/agent-team-code-architecture.md)：Agent Team 代码架构和职责边界
 
+## 交流群
+
+欢迎扫码加入 AgentWeave 微信交流群，一起交流产品动态、使用体验和问题反馈。入群二维码会定期更新。
+
+<img src="./img/agent-weave-wechat-group.jpg" alt="加入 AgentWeave 微信交流群" width="360" />
+
 ## 开源协议
 
 项目目前尚未声明开源协议。在正式添加 License 前，仓库所有者保留全部权利。
