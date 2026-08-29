@@ -129,6 +129,7 @@ Conversation and Team event streams support sequence cursors for reconnecting cl
 - **Reach Desktop feature parity**: keep macOS and Windows behavior aligned with the Web application, improve embedded-service reliability, environment detection, data migration, signing, packaging, and automatic updates.
 - **Real-time artifact updates**: stream Agent-created files and deliverables into the workspace, refresh previews as content changes, preserve artifact versions, and surface build and export status without manual reloads.
 - **Multi-Agent memory reuse**: introduce layered personal, project, and Team memory so one Agent's useful discoveries can be recalled by other Agents without repeating the same research or setup.
+- **Internationalization**: add a maintainable localization system for the Web and Desktop applications, starting with English and Simplified Chinese, with locale-aware UI copy, dates, numbers, and future translation expansion.
 - **Skills**: add reusable Skill discovery, installation, configuration, permission controls, and assignment to individual Agents, role presets, and Agent Teams.
 - **Office workflows**: support creating, reading, editing, previewing, and exporting Word documents, spreadsheets, presentations, and PDFs through Agent-assisted workflows.
 
