@@ -37,6 +37,7 @@ Create persisted roles with provider-specific instructions, then assign them con
 - **Spatial canvas**: arrange agents, teams, files, and working context on a persistent tldraw canvas.
 - **Live agent conversations**: stream assistant output, reasoning, tools, permissions, and usage updates over SSE.
 - **Durable sessions**: persist conversations, completed content blocks, runs, canvas snapshots, and team state in SQLite.
+- **Shared memory foundation**: capture reusable knowledge from completed Agent work, then recall it across sessions and Agents so teams can build on prior decisions, discoveries, and working patterns.
 - **Agent Teams**: create a leader and teammates with isolated conversations, shared workspace context, tasks, mailbox messages, and approval-controlled spawning.
 - **Role presets**: define reusable roles with provider selection and system prompts, then assign them to team leaders or members.
 - **Local file access**: browse and preview supported files from an agent workspace through a constrained read-only API.
@@ -127,6 +128,7 @@ Conversation and Team event streams support sequence cursors for reconnecting cl
 - **Stabilize the Web experience**: harden canvas persistence, Agent and Team lifecycle recovery, streaming reconnection, error handling, compatibility, and end-to-end test coverage.
 - **Reach Desktop feature parity**: keep macOS and Windows behavior aligned with the Web application, improve embedded-service reliability, environment detection, data migration, signing, packaging, and automatic updates.
 - **Real-time artifact updates**: stream Agent-created files and deliverables into the workspace, refresh previews as content changes, preserve artifact versions, and surface build and export status without manual reloads.
+- **Multi-Agent memory reuse**: introduce layered personal, project, and Team memory so one Agent's useful discoveries can be recalled by other Agents without repeating the same research or setup.
 - **Skills**: add reusable Skill discovery, installation, configuration, permission controls, and assignment to individual Agents, role presets, and Agent Teams.
 - **Office workflows**: support creating, reading, editing, previewing, and exporting Word documents, spreadsheets, presentations, and PDFs through Agent-assisted workflows.
 
