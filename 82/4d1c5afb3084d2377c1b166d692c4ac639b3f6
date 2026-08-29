@@ -1,0 +1,37 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.20",
+  "base_commit_sha": "824d1c5afb3084d2377c1b166d692c4ac639b3f6",
+  "prompts": {},
+  "commit_stats": {
+    "git_diff_added_lines": 4,
+    "git_diff_deleted_lines": 0,
+    "ai_additions": 0,
+    "ai_accepted": 0,
+    "BYMC": 4,
+    "mixed_additions": 0,
+    "BYAC": 0,
+    "BYRC": 0,
+    "per_file": {
+      "README.md": {
+        "BYMC": [
+          "40",
+          "131"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      },
+      "README.zh-CN.md": {
+        "BYMC": [
+          "40",
+          "131"
+        ],
+        "BYAC": [],
+        "BYRC": []
+      }
+    }
+  },
+  "commit_timestamp": 1787968520,
+  "requirement_id": ""
+}
