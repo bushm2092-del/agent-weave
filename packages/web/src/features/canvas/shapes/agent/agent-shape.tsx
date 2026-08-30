@@ -2,6 +2,7 @@
 import { Link2 } from "lucide-react"
 import { useEffect, useState, type PointerEvent } from "react"
 import { createPortal } from "react-dom"
+import { useTranslation } from "react-i18next"
 import {
   BaseBoxShapeUtil,
   createShapePropsMigrationIds,
@@ -16,7 +17,7 @@ import {
 import { AGENT_RUNNERS, type AgentRunner } from "@/features/canvas/agent-options"
 import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
 import { conversationApi, ConversationWindow } from "@/features/conversations"
-import { ApiClientError } from "@/lib/api"
+import { appI18n, localizeErrorPresentation, toErrorPresentation, type PresentableError } from "@/i18n"
 
 export type AgentShape = TLBaseShape<
   "agent",
@@ -105,7 +106,7 @@ export class AgentShapeUtil extends BaseBoxShapeUtil<AgentShape> {
       runner: "codex",
       model: "",
       workspace: "",
-      title: "Codex agent",
+      title: appI18n.t("canvas.defaults.agentName", { runner: "Codex" }),
       conversationId: "",
       teamId: "",
       slotId: "",
@@ -129,6 +130,7 @@ export class AgentShapeUtil extends BaseBoxShapeUtil<AgentShape> {
 }
 
 function AgentCard({ editor, shape }: { editor: Editor; shape: AgentShape }) {
+  const { t } = useTranslation()
   const runner = AGENT_RUNNERS[shape.props.runner]
   const [fullscreen, setFullscreen] = useState(false)
   const markHandled = (event: PointerEvent<HTMLElement>) => {
@@ -165,15 +167,22 @@ function AgentCard({ editor, shape }: { editor: Editor; shape: AgentShape }) {
   return (
     <>
       <HTMLContainer className="agent-shape" style={{ width: shape.props.w, height: shape.props.h }}>
-        {conversationWindow && !fullscreen ? conversationWindow : fullscreen ? (
-          <div className="agent-shape__fullscreen-placeholder">Agent is open fullscreen</div>
+        {conversationWindow && !fullscreen ? (
+          conversationWindow
+        ) : fullscreen ? (
+          <div className="agent-shape__fullscreen-placeholder">{t("agents.fullscreenPlaceholder")}</div>
         ) : (
-        <LegacyAgent editor={editor} markHandled={markHandled} shape={shape} />
+          <LegacyAgent editor={editor} markHandled={markHandled} shape={shape} />
         )}
       </HTMLContainer>
-      {fullscreen && conversationWindow &&
+      {fullscreen &&
+        conversationWindow &&
         createPortal(
-          <div className="agent-fullscreen" role="dialog" aria-label={`${shape.props.title} fullscreen`}>
+          <div
+            className="agent-fullscreen"
+            role="dialog"
+            aria-label={t("agents.fullscreenDialog", { name: shape.props.title })}
+          >
             <div className="agent-shape agent-shape--fullscreen">{conversationWindow}</div>
           </div>,
           document.body,
@@ -191,8 +200,9 @@ function LegacyAgent({
   markHandled: (event: PointerEvent<HTMLElement>) => void
   shape: AgentShape
 }) {
+  const { t } = useTranslation()
   const [connecting, setConnecting] = useState(false)
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<PresentableError>()
   const runner = AGENT_RUNNERS[shape.props.runner]
 
   const connect = async () => {
@@ -209,7 +219,7 @@ function LegacyAgent({
         props: { conversationId: conversation.id },
       })
     } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "Unable to connect this agent.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.connectAgent"))
       setConnecting(false)
     }
   }
@@ -223,17 +233,17 @@ function LegacyAgent({
           <span>{runner.label}</span>
         </div>
         <span className="agent-shape__status" data-status="initializing">
-          Offline
+          {t("agents.offline")}
         </span>
       </div>
       <div className="legacy-agent" onPointerDown={markHandled} onPointerUp={markHandled}>
         <Link2 />
-        <strong>Connect this agent</strong>
-        <span>Existing canvas agents need a backend conversation before they can chat.</span>
+        <strong>{t("agents.connectThis")}</strong>
+        <span>{t("agents.connectDescription")}</span>
         <button disabled={!shape.props.workspace || connecting} type="button" onClick={() => void connect()}>
-          {connecting ? "Connecting..." : "Connect"}
+          {connecting ? t("common.connecting") : t("common.connect")}
         </button>
-        {error && <p>{error}</p>}
+        {error && <p>{localizeErrorPresentation(error, t)}</p>}
       </div>
       <div className="agent-shape__meta">
         <span>{runner.provider}</span>

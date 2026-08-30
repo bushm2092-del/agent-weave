@@ -1,17 +1,19 @@
 import type { FileEntry } from "@agent-weave/contracts"
 import { ChevronRight, File, Folder, FolderOpen, Image, LoaderCircle, RotateCw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { fileApi } from "@/features/files/api/file-api"
-import { ApiClientError } from "@/lib/api"
+import { localizeErrorPresentation, toErrorPresentation, type PresentableError } from "@/i18n"
 
 type DirectoryState =
   | { status: "idle"; entries: FileEntry[]; error?: undefined }
   | { status: "loading"; entries: FileEntry[]; error?: undefined }
   | { status: "loaded"; entries: FileEntry[]; error?: undefined }
-  | { status: "error"; entries: FileEntry[]; error: string }
+  | { status: "error"; entries: FileEntry[]; error: PresentableError }
 
 export function FileTree({ rootPath }: { rootPath: string }) {
+  const { t } = useTranslation()
   const [state, setState] = useState<DirectoryState>({ status: "loading", entries: [] })
   const [selectedPath, setSelectedPath] = useState<string>()
 
@@ -27,7 +29,7 @@ export function FileTree({ rootPath }: { rootPath: string }) {
     return (
       <div className="file-tree__status">
         <LoaderCircle className="animate-spin" />
-        <span>Loading files...</span>
+        <span>{t("files.loading")}</span>
       </div>
     )
   }
@@ -35,8 +37,13 @@ export function FileTree({ rootPath }: { rootPath: string }) {
   if (state.status === "error") {
     return (
       <div className="file-tree__status file-tree__status--error">
-        <span>{state.error}</span>
-        <button type="button" aria-label="Retry directory" title="Retry" onClick={() => retryRoot(rootPath, setState)}>
+        <span>{localizeErrorPresentation(state.error, t)}</span>
+        <button
+          type="button"
+          aria-label={t("files.retryDirectory")}
+          title={t("common.retry")}
+          onClick={() => retryRoot(rootPath, setState)}
+        >
           <RotateCw />
         </button>
       </div>
@@ -44,11 +51,11 @@ export function FileTree({ rootPath }: { rootPath: string }) {
   }
 
   if (state.entries.length === 0) {
-    return <div className="file-tree__status">Empty directory</div>
+    return <div className="file-tree__status">{t("files.emptyDirectory")}</div>
   }
 
   return (
-    <div aria-label="Workspace files" className="file-tree" role="tree">
+    <div aria-label={t("files.workspaceFiles")} className="file-tree" role="tree">
       {state.entries.map((entry) => (
         <FileTreeNode depth={0} entry={entry} key={entry.path} selectedPath={selectedPath} onSelect={setSelectedPath} />
       ))}
@@ -67,6 +74,7 @@ function FileTreeNode({
   selectedPath?: string
   onSelect: (path: string) => void
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const [state, setState] = useState<DirectoryState>({ status: "idle", entries: [] })
   const controllerRef = useRef<AbortController | null>(null)
@@ -115,17 +123,17 @@ function FileTreeNode({
             <button
               className="file-tree__nested-error"
               style={{ paddingLeft: 32 + depth * 16 }}
-              title={state.error}
+              title={localizeErrorPresentation(state.error, t)}
               type="button"
               onClick={() => retryNode(entry.path, setState, controllerRef)}
             >
               <RotateCw />
-              Retry
+              {t("common.retry")}
             </button>
           )}
           {state.status === "loaded" && state.entries.length === 0 && (
             <div className="file-tree__nested-empty" style={{ paddingLeft: 32 + depth * 16 }}>
-              Empty
+              {t("files.emptyNested")}
             </div>
           )}
           {state.status === "loaded" &&
@@ -159,7 +167,7 @@ async function loadDirectory(path: string, signal: AbortSignal): Promise<Directo
     return {
       status: "error",
       entries: [],
-      error: error instanceof ApiClientError ? error.message : "Unable to read this directory.",
+      error: toErrorPresentation(error, "errors.fallbacks.readDirectory"),
     }
   }
 }

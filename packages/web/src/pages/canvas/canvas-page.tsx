@@ -1,5 +1,6 @@
 import { ArrowLeft, Eye, Focus, FolderTree, Settings } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router"
 import {
   createShapeId,
@@ -40,19 +41,43 @@ import {
 } from "@/features/teams"
 import type { AgentTeamShape } from "@/features/canvas/shapes/agent-team"
 import { ApiClientError } from "@/lib/api"
+import { LanguageSwitcher } from "@/i18n/language-switcher"
+import {
+  appI18n,
+  localizeErrorPresentation,
+  normalizeLocale,
+  ownedErrorPresentation,
+  toErrorPresentation,
+  type AppLocale,
+  type PresentableError,
+} from "@/i18n"
+import { TLDRAW_UI_OVERRIDES } from "@/i18n/tldraw"
 
 const shapeUtils = [AgentShapeUtil, AgentTeamShapeUtil, FilePreviewShapeUtil]
+
+/* oxlint-disable-next-line react/only-export-components -- the locale adapter is a tested CanvasPage boundary. */
+export function toTldrawLocale(locale: AppLocale): "en" | "zh-cn" {
+  return locale === "zh-CN" ? "zh-cn" : "en"
+}
+
 export function CanvasPage() {
+  const { i18n, t } = useTranslation()
+  const locale = normalizeLocale(i18n.resolvedLanguage ?? i18n.language)
   const { canvasId = "untitled" } = useParams()
   const [editor, setEditor] = useState<Editor | null>(null)
   const [composerOpen, setComposerOpen] = useState(false)
   const [teamComposerOpen, setTeamComposerOpen] = useState(false)
   const [cleanUi, setCleanUi] = useState(false)
   const [fileSidebarOpen, setFileSidebarOpen] = useState(false)
-  const [canvasName, setCanvasName] = useState("Untitled canvas")
-  const [canvasError, setCanvasError] = useState<string>()
+  const [canvasName, setCanvasName] = useState(() => t("canvas.defaults.untitled"))
+  const [canvasError, setCanvasError] = useState<PresentableError>()
   const selectedAgent = useSingleSelectedAgent(editor)
   const selectedTeam = useSingleSelectedTeam(editor)
+
+  useEffect(() => {
+    if (!editor) return
+    editor.user.updateUserPreferences({ locale: toTldrawLocale(locale) })
+  }, [editor, locale])
 
   useEffect(() => {
     if (!selectedAgent) setFileSidebarOpen(false)
@@ -80,10 +105,23 @@ export function CanvasPage() {
               reader.onload = () => {
                 const center = canvasEditor.getViewportPageBounds().center
                 const id = createShapeId()
-                canvasEditor.createShape({ id, type: "file-preview", x: center.x - 180, y: center.y - 140, props: { name: file.name, mimeType: file.type || "application/octet-stream", dataUrl: String(reader.result), w: 360, h: 280 } })
+                canvasEditor.createShape({
+                  id,
+                  type: "file-preview",
+                  x: center.x - 180,
+                  y: center.y - 140,
+                  props: {
+                    name: file.name,
+                    mimeType: file.type || "application/octet-stream",
+                    dataUrl: String(reader.result),
+                    w: 360,
+                    h: 280,
+                  },
+                })
                 canvasEditor.select(id)
               }
-              reader.onerror = () => setCanvasError(`Unable to read ${file.name}.`)
+              reader.onerror = () =>
+                setCanvasError(ownedErrorPresentation("canvas.errors.readFile", { name: file.name }))
               reader.readAsDataURL(file)
             }
             input.click()
@@ -123,7 +161,7 @@ export function CanvasPage() {
         if (active) setCanvasName(canvas.name)
       })
       .catch((error) => {
-        if (active) setCanvasError(error instanceof Error ? error.message : "Unable to load canvas.")
+        if (active) setCanvasError(toErrorPresentation(error, "errors.fallbacks.loadCanvas"))
       })
     return () => {
       active = false
@@ -153,7 +191,7 @@ export function CanvasPage() {
         }
         setEditor(mountedEditor)
       } catch (error) {
-        setCanvasError(error instanceof Error ? error.message : "Unable to load canvas content.")
+        setCanvasError(toErrorPresentation(error, "errors.fallbacks.loadCanvasContent"))
       }
     },
     [canvasId],
@@ -173,7 +211,7 @@ export function CanvasPage() {
         })
         .then(() => undefined)
         .catch((error) => {
-          setCanvasError(error instanceof Error ? error.message : "Unable to save canvas content.")
+          setCanvasError(toErrorPresentation(error, "errors.fallbacks.saveCanvasContent"))
         })
     }
     const unsubscribe = editor.store.listen(
@@ -196,7 +234,7 @@ export function CanvasPage() {
     const name = canvasName.trim()
     if (!name) return
     void canvasController.update(canvasId, { name }).catch((error) => {
-      setCanvasError(error instanceof Error ? error.message : "Unable to rename canvas.")
+      setCanvasError(toErrorPresentation(error, "errors.fallbacks.renameCanvas"))
     })
   }
 
@@ -216,7 +254,7 @@ export function CanvasPage() {
         const slotId = shape.props.slotId
         const team = teamStore.getState().teams[teamId]?.team
         if (shape.props.role === "leader" || team?.leaderSlotId === slotId) {
-          setCanvasError("The team leader cannot be removed. Delete the entire team instead.")
+          setCanvasError(ownedErrorPresentation("canvas.errors.leaderCannotRemove"))
           return false
         }
         if (pendingMemberDeletes.has(slotId)) return false
@@ -234,7 +272,7 @@ export function CanvasPage() {
                 // The Team SSE event will still remove the projection if this refresh fails.
               }
             } catch (error) {
-              if (active) setCanvasError(error instanceof Error ? error.message : "Unable to remove the team member.")
+              if (active) setCanvasError(toErrorPresentation(error, "errors.fallbacks.removeTeamMember"))
             } finally {
               pendingMemberDeletes.delete(slotId)
             }
@@ -342,7 +380,7 @@ export function CanvasPage() {
 
   const createAgent = useCallback(
     async (draft: AgentDraft) => {
-      if (!editor) throw new Error("The canvas is not ready yet.")
+      if (!editor) throw ownedErrorPresentation("canvas.errors.notReady")
       const runner = AGENT_RUNNERS[draft.runner]
       const conversation = await conversationApi.create({
         agent: runner.provider,
@@ -360,7 +398,7 @@ export function CanvasPage() {
             runner: draft.runner,
             model: "",
             workspace: conversation.workspace,
-            title: `${runner.label} agent`,
+            title: t("canvas.defaults.agentName", { runner: runner.label }),
             conversationId: conversation.id,
             teamId: "",
             slotId: "",
@@ -374,18 +412,26 @@ export function CanvasPage() {
         throw error
       }
     },
-    [editor],
+    [editor, t],
   )
 
   const createTeam = useCallback(
     async (draft: TeamDraft) => {
-      if (!editor) throw new Error("The canvas is not ready yet.")
+      if (!editor) throw ownedErrorPresentation("canvas.errors.notReady")
       const team = await teamApi.create({
         canvasId,
         name: draft.name,
         workspace: draft.workspace,
-        leader: { name: draft.leader.name, agent: AGENT_RUNNERS[draft.leader.runner].provider, ...(draft.leader.rolePresetId ? { rolePresetId: draft.leader.rolePresetId } : {}) },
-        members: draft.members.map((member) => ({ name: member.name, agent: AGENT_RUNNERS[member.runner].provider, ...(member.rolePresetId ? { rolePresetId: member.rolePresetId } : {}) })),
+        leader: {
+          name: draft.leader.name,
+          agent: AGENT_RUNNERS[draft.leader.runner].provider,
+          ...(draft.leader.rolePresetId ? { rolePresetId: draft.leader.rolePresetId } : {}),
+        },
+        members: draft.members.map((member) => ({
+          name: member.name,
+          agent: AGENT_RUNNERS[member.runner].provider,
+          ...(member.rolePresetId ? { rolePresetId: member.rolePresetId } : {}),
+        })),
       })
       try {
         teamController.prepare(team)
@@ -400,15 +446,14 @@ export function CanvasPage() {
   )
 
   return (
-    <main
-      className="canvas-page relative h-dvh w-dvw overflow-hidden bg-background"
-      data-clean-ui={cleanUi}
-    >
+    <main className="canvas-page relative h-dvh w-dvw overflow-hidden bg-background" data-clean-ui={cleanUi}>
       <div className="canvas-stage" data-file-sidebar-open={Boolean(fileSidebarOpen && selectedAgent)}>
         <Tldraw
           key={canvasId}
           components={tldrawComponents}
+          locale={toTldrawLocale(locale)}
           onMount={(mountedEditor) => void mountEditor(mountedEditor)}
+          overrides={TLDRAW_UI_OVERRIDES}
           shapeUtils={shapeUtils}
         />
         {editor && !cleanUi && <SelectionLayoutToolbar editor={editor} />}
@@ -426,57 +471,68 @@ export function CanvasPage() {
         <TeamInspector teamId={selectedTeam.props.teamId} onClose={() => editor?.selectNone()} />
       )}
 
-      {!cleanUi && <header className="canvas-header">
-        <div className="flex min-w-0 items-center gap-2">
-          <Button asChild size="icon-sm" variant="ghost">
-            <Link to="/" aria-label="Back to canvases">
-              <ArrowLeft />
-            </Link>
-          </Button>
-          <div className="canvas-header__brand"><img src="/icon.png" alt="" /></div>
-          <input
-            aria-label="Canvas name"
-            className="min-w-0 max-w-56 rounded-sm bg-transparent px-1 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            value={canvasName}
-            onBlur={saveCanvasName}
-            onChange={(event) => setCanvasName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") event.currentTarget.blur()
-            }}
-          />
-        </div>
+      {!cleanUi && (
+        <header className="canvas-header">
+          <div className="flex min-w-0 items-center gap-2">
+            <Button asChild size="icon-sm" variant="ghost">
+              <Link to="/" aria-label={t("canvas.back")}>
+                <ArrowLeft />
+              </Link>
+            </Button>
+            <div className="canvas-header__brand">
+              <img src="/icon.png" alt="" />
+            </div>
+            <input
+              aria-label={t("canvas.name")}
+              className="min-w-0 max-w-56 rounded-sm bg-transparent px-1 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={canvasName}
+              onBlur={saveCanvasName}
+              onChange={(event) => setCanvasName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.currentTarget.blur()
+              }}
+            />
+          </div>
 
-        <div className="flex items-center gap-2">
-          {selectedAgent && (
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            {selectedAgent && (
+              <Button
+                size="icon-sm"
+                variant={fileSidebarOpen ? "secondary" : "ghost"}
+                aria-expanded={fileSidebarOpen}
+                aria-label={fileSidebarOpen ? t("canvas.hideAgentFiles") : t("canvas.showAgentFiles")}
+                title={fileSidebarOpen ? t("canvas.hideAgentFiles") : t("canvas.showAgentFiles")}
+                onClick={() => setFileSidebarOpen((open) => !open)}
+              >
+                <FolderTree />
+              </Button>
+            )}
+            <Button size="icon-sm" variant="ghost" aria-label={t("canvas.workspaceSettings")}>
+              <Settings />
+            </Button>
             <Button
               size="icon-sm"
-              variant={fileSidebarOpen ? "secondary" : "ghost"}
-              aria-expanded={fileSidebarOpen}
-              aria-label={fileSidebarOpen ? "Hide agent files" : "Show agent files"}
-              title={fileSidebarOpen ? "Hide agent files" : "Show agent files"}
-              onClick={() => setFileSidebarOpen((open) => !open)}
+              variant="ghost"
+              aria-label={t("canvas.showOnlyWhiteboard")}
+              title={t("canvas.cleanUi")}
+              onClick={enterCleanUi}
             >
-              <FolderTree />
+              <Focus />
             </Button>
-          )}
-          <Button size="icon-sm" variant="ghost" aria-label="Workspace settings">
-            <Settings />
-          </Button>
-          <Button size="icon-sm" variant="ghost" aria-label="Show only whiteboard" title="Clean UI" onClick={enterCleanUi}>
-            <Focus />
-          </Button>
-        </div>
-      </header>}
+          </div>
+        </header>
+      )}
 
-      {!cleanUi && canvasError && <div className="canvas-error">{canvasError}</div>}
+      {!cleanUi && canvasError && <div className="canvas-error">{localizeErrorPresentation(canvasError, t)}</div>}
 
       {cleanUi && (
         <Button
           className="canvas-clean-ui__exit"
           size="icon-sm"
           variant="outline"
-          aria-label="Restore interface"
-          title="Restore interface (Esc)"
+          aria-label={t("canvas.restoreInterface")}
+          title={t("canvas.restoreInterfaceEsc")}
           onClick={() => setCleanUi(false)}
         >
           <Eye />
@@ -531,7 +587,7 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.addEventListener("load", () => resolve(String(reader.result)))
-    reader.addEventListener("error", () => reject(reader.error ?? new Error("Unable to read canvas thumbnail.")))
+    reader.addEventListener("error", () => reject(reader.error ?? new Error(appI18n.t("canvas.errors.readThumbnail"))))
     reader.readAsDataURL(blob)
   })
 }

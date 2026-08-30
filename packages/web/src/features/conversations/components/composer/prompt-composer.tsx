@@ -1,11 +1,12 @@
 import type { MessageAttachment, Run } from "@agent-weave/contracts"
 import { FileCode2, ImagePlus, Send, Square, X } from "lucide-react"
 import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
+import { useTranslation } from "react-i18next"
 
 import { conversationApi } from "@/features/conversations/api"
 import { conversationStore } from "@/features/conversations/store"
 import { teamApi } from "@/features/teams"
-import { ApiClientError } from "@/lib/api"
+import { localizeErrorPresentation, ownedErrorPresentation, toErrorPresentation, type PresentableError } from "@/i18n"
 
 export function PromptComposer({
   conversationId,
@@ -18,12 +19,13 @@ export function PromptComposer({
   disabled: boolean
   teamTarget?: { teamId: string; slotId: string }
 }) {
+  const { t } = useTranslation()
   const [message, setMessage] = useState("")
   const [attachments, setAttachments] = useState<MessageAttachment[]>([])
   const [workspacePath, setWorkspacePath] = useState("")
   const [showWorkspacePath, setShowWorkspacePath] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<PresentableError>()
   const imageInput = useRef<HTMLInputElement>(null)
 
   const send = async () => {
@@ -45,7 +47,7 @@ export function PromptComposer({
       setMessage("")
       setAttachments([])
     } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "Unable to send the message.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.sendMessage"))
     } finally {
       setSubmitting(false)
     }
@@ -58,7 +60,7 @@ export function PromptComposer({
       const run = await conversationApi.cancelRun(conversationId, activeRun.id)
       conversationStore.getState().upsertRun(run)
     } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "Unable to stop the run.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.stopRun"))
     }
   }
 
@@ -81,14 +83,18 @@ export function PromptComposer({
     event.target.value = ""
     if (!file) return
     if (file.size > 20 * 1024 * 1024) {
-      setError("Images must be smaller than 20 MB.")
+      setError({ fallbackKey: "conversations.imageTooLarge" })
       return
     }
-    const dataUrl = await readAsDataUrl(file)
-    setAttachments((current) => [
-      ...current,
-      { type: "image", mediaType: file.type || "image/png", data: dataUrl.split(",")[1], name: file.name },
-    ])
+    try {
+      const dataUrl = await readAsDataUrl(file)
+      setAttachments((current) => [
+        ...current,
+        { type: "image", mediaType: file.type || "image/png", data: dataUrl.split(",")[1], name: file.name },
+      ])
+    } catch (readError) {
+      setError(toErrorPresentation(readError, "conversations.readImageError"))
+    }
   }
 
   return (
@@ -98,9 +104,9 @@ export function PromptComposer({
           {attachments.map((attachment, index) => (
             <span key={`${attachment.type}-${index}`}>
               {attachment.type === "image" ? <ImagePlus /> : <FileCode2 />}
-              {attachment.type === "image" ? attachment.name || "Image" : attachment.path}
+              {attachment.type === "image" ? attachment.name || t("common.image") : attachment.path}
               <button
-                aria-label="Remove attachment"
+                aria-label={t("conversations.removeAttachment")}
                 type="button"
                 onClick={() => setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))}
               >
@@ -114,7 +120,7 @@ export function PromptComposer({
         <div className="prompt-composer__workspace-file">
           <input
             autoFocus
-            placeholder="Path relative to workspace"
+            placeholder={t("conversations.pathPlaceholder")}
             value={workspacePath}
             onChange={(event) => setWorkspacePath(event.target.value)}
             onKeyDown={(event) => {
@@ -125,20 +131,20 @@ export function PromptComposer({
             }}
           />
           <button disabled={!workspacePath.trim()} type="button" onClick={addWorkspaceFile}>
-            Add
+            {t("common.add")}
           </button>
         </div>
       )}
       <div className="prompt-composer__input">
         <textarea
-          aria-label="Message agent"
+          aria-label={t("conversations.messageAgent")}
           disabled={disabled}
           placeholder={
             disabled
-              ? "Waiting for agent..."
+              ? t("conversations.waitingPlaceholder")
               : teamTarget
-                ? "Message this team member..."
-                : "Ask this agent anything..."
+                ? t("conversations.memberPlaceholder")
+                : t("conversations.agentPlaceholder")
           }
           rows={2}
           value={message}
@@ -148,26 +154,35 @@ export function PromptComposer({
         <div className="prompt-composer__toolbar">
           <div>
             <button
-              aria-label="Attach workspace file"
+              aria-label={t("conversations.attachWorkspaceFile")}
               type="button"
               onClick={() => setShowWorkspacePath((open) => !open)}
             >
               <FileCode2 />
             </button>
-            <button aria-label="Attach image" type="button" onClick={() => imageInput.current?.click()}>
+            <button
+              aria-label={t("conversations.attachImage")}
+              type="button"
+              onClick={() => imageInput.current?.click()}
+            >
               <ImagePlus />
             </button>
             <input accept="image/*" hidden ref={imageInput} type="file" onChange={(event) => void addImage(event)} />
           </div>
           {activeRun && (
-            <button className="prompt-composer__stop" aria-label="Stop run" type="button" onClick={() => void stop()}>
+            <button
+              className="prompt-composer__stop"
+              aria-label={t("conversations.stopRun")}
+              type="button"
+              onClick={() => void stop()}
+            >
               <Square />
             </button>
           )}
           {(!activeRun || teamTarget) && (
             <button
               className="prompt-composer__send"
-              aria-label="Send message"
+              aria-label={t("conversations.send")}
               disabled={!message.trim() || disabled || submitting}
               type="button"
               onClick={() => void send()}
@@ -177,7 +192,7 @@ export function PromptComposer({
           )}
         </div>
       </div>
-      {error && <p className="prompt-composer__error">{error}</p>}
+      {error && <p className="prompt-composer__error">{localizeErrorPresentation(error, t)}</p>}
     </div>
   )
 }
@@ -186,7 +201,7 @@ function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(reader.error ?? new Error("Unable to read the image."))
+    reader.onerror = () => reject(reader.error ?? ownedErrorPresentation("conversations.readImageError"))
     reader.readAsDataURL(file)
   })
 }

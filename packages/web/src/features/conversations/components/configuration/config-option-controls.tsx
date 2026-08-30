@@ -1,14 +1,16 @@
 import type { AgentConfigOption, Conversation, SetConfigOptionRequest } from "@agent-weave/contracts"
 import { SlidersHorizontal } from "lucide-react"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { conversationApi } from "@/features/conversations/api"
 import { updateConversationSnapshot } from "@/features/conversations/lifecycle"
-import { ApiClientError } from "@/lib/api"
+import { localizeErrorPresentation, toErrorPresentation, type PresentableError } from "@/i18n"
 
 export function ConfigOptionControls({ conversation }: { conversation: Conversation }) {
+  const { t } = useTranslation()
   const [updating, setUpdating] = useState<string>()
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<PresentableError>()
 
   if (!conversation.configOptions.length) return null
 
@@ -19,7 +21,7 @@ export function ConfigOptionControls({ conversation }: { conversation: Conversat
       const updated = await conversationApi.setConfigOption(conversation.id, option.id, input)
       updateConversationSnapshot(updated)
     } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "Configuration update failed.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.updateConfiguration"))
     } finally {
       setUpdating(undefined)
     }
@@ -39,8 +41,8 @@ export function ConfigOptionControls({ conversation }: { conversation: Conversat
         ))}
       </div>
       {error && (
-        <span className="agent-config__error" title={error}>
-          {error}
+        <span className="agent-config__error" title={localizeErrorPresentation(error, t)}>
+          {localizeErrorPresentation(error, t)}
         </span>
       )}
     </div>

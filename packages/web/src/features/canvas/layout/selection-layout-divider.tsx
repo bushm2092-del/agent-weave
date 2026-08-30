@@ -1,5 +1,6 @@
 import { useRef, type PointerEvent } from "react"
 import type { Editor } from "tldraw"
+import { useTranslation } from "react-i18next"
 
 import type { AgentShape } from "@/features/canvas/shapes/agent/agent-shape"
 
@@ -23,6 +24,7 @@ type ResizeSession = {
 }
 
 export function SelectionLayoutDivider({ editor, split }: { editor: Editor; split: ScreenAgentSplit }) {
+  const { t } = useTranslation()
   const resizeSession = useRef<ResizeSession | null>(null)
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -107,7 +109,7 @@ export function SelectionLayoutDivider({ editor, split }: { editor: Editor; spli
 
   return (
     <div
-      aria-label="Resize agent split"
+      aria-label={t("canvas.layout.resizeSplit")}
       className="selection-layout-divider"
       data-orientation={split.orientation}
       role="separator"
