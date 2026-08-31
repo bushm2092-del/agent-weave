@@ -1,13 +1,14 @@
 import type { CanvasSummary } from "@agent-weave/contracts"
 import { create } from "zustand"
 import { immer } from "zustand/middleware/immer"
+import type { PresentableError } from "@/i18n"
 
 type CanvasState = {
   canvases: CanvasSummary[]
   loading: boolean
-  error?: string
+  error?: PresentableError
   setLoading: (loading: boolean) => void
-  setError: (error?: string) => void
+  setError: (error?: PresentableError) => void
   setCanvases: (canvases: CanvasSummary[]) => void
   upsertCanvas: (canvas: CanvasSummary) => void
   removeCanvas: (canvasId: string) => void

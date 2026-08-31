@@ -1,6 +1,8 @@
-import type { RolePreset } from "@agent-weave/contracts"
+import type { RolePreset, TeamEventType } from "@agent-weave/contracts"
+import type { TFunction } from "i18next"
 import { Activity, Check, ListTodo, Plus, Trash2, Users, X } from "lucide-react"
 import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { AGENT_RUNNERS, AGENT_RUNNER_IDS, type AgentRunner } from "@/features/canvas/agent-options"
 import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
@@ -8,13 +10,21 @@ import { rolePresetApi } from "@/features/role-presets"
 import { teamApi } from "@/features/teams/api"
 import { teamController } from "@/features/teams/lifecycle"
 import { useTeamStore } from "@/features/teams/store"
-import { ApiClientError } from "@/lib/api"
+import {
+  formatNumber,
+  formatTime,
+  localizeErrorPresentation,
+  localizeRolePreset,
+  toErrorPresentation,
+  type PresentableError,
+} from "@/i18n"
 
 type InspectorTab = "members" | "tasks" | "activity"
 
 const inspectorTabs: InspectorTab[] = ["members", "tasks", "activity"]
 
 export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: () => void }) {
+  const { t, i18n } = useTranslation()
   const view = useTeamStore((state) => state.teams[teamId])
   const [tab, setTab] = useState<InspectorTab>("members")
   const [adding, setAdding] = useState(false)
@@ -25,12 +35,16 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
   const [rolePresets, setRolePresets] = useState<RolePreset[]>([])
   const [removingSlotIds, setRemovingSlotIds] = useState<Set<string>>(() => new Set())
   const [resolvingRequestIds, setResolvingRequestIds] = useState<Set<string>>(() => new Set())
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<PresentableError>()
   const inspectorId = useId()
   const team = view?.team
+  const locale = i18n.resolvedLanguage === "zh-CN" ? "zh-CN" : "en"
 
   useEffect(() => {
-    void rolePresetApi.list().then(setRolePresets).catch(() => undefined)
+    void rolePresetApi
+      .list()
+      .then(setRolePresets)
+      .catch(() => undefined)
   }, [])
 
   const refresh = () => {
@@ -52,7 +66,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
       setAdding(false)
       refresh()
     } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "Unable to add the member.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.addTeamMember"))
     } finally {
       setAddingMember(false)
     }
@@ -67,7 +81,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
       refresh()
     } catch (requestError) {
       setRemovingSlotIds((current) => without(current, slotId))
-      setError(requestError instanceof ApiClientError ? requestError.message : "Unable to remove the member.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.removeTeamMember"))
     }
   }
 
@@ -81,7 +95,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
       refresh()
     } catch (requestError) {
       setResolvingRequestIds((current) => without(current, requestId))
-      setError(requestError instanceof ApiClientError ? requestError.message : "Unable to resolve the spawn request.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.resolveSpawnRequest"))
     }
   }
 
@@ -99,20 +113,23 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
     requestAnimationFrame(() => document.getElementById(tabButtonId(inspectorId, nextTab))?.focus())
   }
 
-  const visibleError = error ?? view?.error
+  const visibleError = localizeErrorPresentation(error ?? view?.error, t)
 
   return (
-    <aside aria-label={`${team?.name ?? "Agent team"} inspector`} className="team-inspector">
+    <aside
+      aria-label={t("teams.inspector", { name: team?.name ?? t("teams.defaults.teamName") })}
+      className="team-inspector"
+    >
       <div className="team-inspector__header">
         <div>
-          <strong>{team?.name ?? "Agent team"}</strong>
-          <span aria-live="polite">{view?.connectionStatus ?? "connecting"}</span>
+          <strong>{team?.name ?? t("teams.defaults.teamName")}</strong>
+          <span aria-live="polite">{connectionLabel(view?.connectionStatus, t)}</span>
         </div>
-        <Button type="button" size="icon-sm" variant="ghost" aria-label="Close team inspector" onClick={onClose}>
+        <Button type="button" size="icon-sm" variant="ghost" aria-label={t("teams.closeInspector")} onClick={onClose}>
           <X />
         </Button>
       </div>
-      <div aria-label="Team details" className="team-inspector__tabs" role="tablist">
+      <div aria-label={t("teams.details")} className="team-inspector__tabs" role="tablist">
         <button
           aria-controls={tabPanelId(inspectorId, "members")}
           aria-selected={tab === "members"}
@@ -124,7 +141,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
           onClick={() => setTab("members")}
           onKeyDown={(event) => selectAdjacentTab(event, "members")}
         >
-          <Users /> Members
+          <Users /> {t("teams.members")}
         </button>
         <button
           aria-controls={tabPanelId(inspectorId, "tasks")}
@@ -137,7 +154,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
           onClick={() => setTab("tasks")}
           onKeyDown={(event) => selectAdjacentTab(event, "tasks")}
         >
-          <ListTodo /> Tasks
+          <ListTodo /> {t("teams.tasks")}
         </button>
         <button
           aria-controls={tabPanelId(inspectorId, "activity")}
@@ -150,7 +167,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
           onClick={() => setTab("activity")}
           onKeyDown={(event) => selectAdjacentTab(event, "activity")}
         >
-          <Activity /> Activity
+          <Activity /> {t("teams.activity")}
         </button>
       </div>
 
@@ -164,7 +181,12 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
         {tab === "members" && (
           <>
             <div className="team-inspector__section-title">
-              <span>{team?.members.length ?? 0} members</span>
+              <span>
+                {t("teams.memberCount", {
+                  count: team?.members.length ?? 0,
+                  formattedCount: formatNumber(team?.members.length ?? 0, locale),
+                })}
+              </span>
               <Button
                 type="button"
                 size="xs"
@@ -172,7 +194,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                 disabled={!team || team.members.length >= 8}
                 onClick={() => setAdding((open) => !open)}
               >
-                <Plus /> Add
+                <Plus /> {t("common.add")}
               </Button>
             </div>
             {team?.spawnRequests
@@ -182,20 +204,24 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                 return (
                   <div
                     aria-busy={resolving}
-                    aria-label={`Spawn request for ${request.name}`}
+                    aria-label={t("teams.spawnRequest", { name: request.name })}
                     className="team-spawn-request"
                     key={request.id}
                     role="group"
                   >
                     <div>
-                      <strong>Add {request.name}?</strong>
+                      <strong>{t("teams.addNamedMember", { name: request.name })}</strong>
                       <span>
-                        {AGENT_RUNNERS[providerRunner(request.agent)].label} · Requested by{" "}
-                        {team.members.find((member) => member.slotId === request.requestedBySlotId)?.name ?? "Leader"}
+                        {AGENT_RUNNERS[providerRunner(request.agent)].label} ·{" "}
+                        {t("teams.requestedBy", {
+                          name:
+                            team.members.find((member) => member.slotId === request.requestedBySlotId)?.name ??
+                            t("teams.roleLabel.leader"),
+                        })}
                       </span>
                     </div>
                     <button
-                      aria-label={`Approve ${request.name}`}
+                      aria-label={t("teams.approve", { name: request.name })}
                       disabled={resolving}
                       type="button"
                       onClick={() => void resolveSpawnRequest(request.id, true)}
@@ -203,7 +229,7 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                       <Check />
                     </button>
                     <button
-                      aria-label={`Reject ${request.name}`}
+                      aria-label={t("teams.reject", { name: request.name })}
                       disabled={resolving}
                       type="button"
                       onClick={() => void resolveSpawnRequest(request.id, false)}
@@ -223,21 +249,21 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                 }}
               >
                 <label className="sr-only" htmlFor={`${inspectorId}-member-name`}>
-                  Member name
+                  {t("teams.memberName")}
                 </label>
                 <input
                   autoFocus
                   disabled={addingMember}
                   id={`${inspectorId}-member-name`}
-                  placeholder="Member name"
+                  placeholder={t("teams.memberName")}
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                 />
                 <label className="sr-only" htmlFor={`${inspectorId}-member-runner`}>
-                  Member runner
+                  {t("teams.memberRunner")}
                 </label>
                 <select
-                  aria-label="Member role preset"
+                  aria-label={t("teams.memberRolePreset")}
                   className="team-member-add__role"
                   disabled={addingMember}
                   value={rolePresetId}
@@ -248,8 +274,12 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                     if (preset) setRunner(providerRunner(preset.agent))
                   }}
                 >
-                  <option value="">No role</option>
-                  {rolePresets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+                  <option value="">{t("teams.noRole")}</option>
+                  {rolePresets.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {localizeRolePreset(preset, t).name}
+                    </option>
+                  ))}
                 </select>
                 <select
                   disabled={addingMember}
@@ -264,13 +294,15 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                   ))}
                 </select>
                 <Button type="submit" size="sm" disabled={!name.trim() || addingMember}>
-                  {addingMember ? "Adding..." : "Add"}
+                  {addingMember ? t("teams.adding") : t("common.add")}
                 </Button>
               </form>
             )}
             <div className="team-member-list">
               {team?.members.map((member) => {
                 const runnerInfo = AGENT_RUNNERS[providerRunner(member.agent)]
+                const rolePreset = rolePresets.find((preset) => preset.id === member.rolePresetId)
+                const roleName = rolePreset ? localizeRolePreset(rolePreset, t).name : runnerInfo.label
                 const status = member.runtimeStatus === "ready" ? member.workStatus : member.runtimeStatus
                 const removing = removingSlotIds.has(member.slotId)
                 return (
@@ -283,19 +315,22 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                     <div>
                       <strong>{member.name}</strong>
                       <span>
-                        {member.role} · {rolePresets.find((preset) => preset.id === member.rolePresetId)?.name ?? runnerInfo.label}
+                        {t(`teams.roleLabel.${member.role}`)} · {roleName}
                       </span>
                     </div>
                     <span
-                      aria-label={`${member.name} status: ${removing ? "removing" : status}`}
+                      aria-label={t("teams.memberStatus", {
+                        name: member.name,
+                        status: statusLabel(removing ? "removing" : status, t),
+                      })}
                       className="team-member-row__status"
                       data-status={removing ? "removing" : status}
                     >
-                      {removing ? "removing" : status}
+                      {statusLabel(removing ? "removing" : status, t)}
                     </span>
                     {member.role !== "leader" && (
                       <button
-                        aria-label={`Remove ${member.name}`}
+                        aria-label={t("teams.removeMemberNamed", { name: member.name })}
                         disabled={removing}
                         type="button"
                         onClick={() => void removeMember(member.slotId)}
@@ -318,22 +353,18 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                   <span data-status={task.status} />
                   <div>
                     <strong>{task.subject}</strong>
-                    <p>{task.description || "No description"}</p>
+                    <p>{task.description || t("teams.noDescription")}</p>
                     <small>
-                      {task.status.replace("_", " ")}
+                      {statusLabel(task.status, t)}
                       {task.ownerSlotId
-                        ? ` · ${team.members.find((member) => member.slotId === task.ownerSlotId)?.name ?? "Unassigned"}`
-                        : " · Unassigned"}
+                        ? ` · ${team.members.find((member) => member.slotId === task.ownerSlotId)?.name ?? t("teams.unassigned")}`
+                        : ` · ${t("teams.unassigned")}`}
                     </small>
                   </div>
                 </div>
               ))
             ) : (
-              <EmptyState
-                icon={<ListTodo />}
-                title="No team tasks"
-                text="Tasks created by team agents will appear here."
-              />
+              <EmptyState icon={<ListTodo />} title={t("teams.tasksEmpty")} text={t("teams.tasksEmptyDescription")} />
             )}
           </div>
         )}
@@ -345,18 +376,16 @@ export function TeamInspector({ teamId, onClose }: { teamId: string; onClose: ()
                 <div className="team-activity-row" key={event.id}>
                   <span />
                   <div>
-                    <strong>{activityLabel(event.type)}</strong>
-                    <small>
-                      {new Date(event.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </small>
+                    <strong>{activityLabel(event.type, t)}</strong>
+                    <small>{formatTime(Date.parse(event.createdAt), locale)}</small>
                   </div>
                 </div>
               ))
             ) : (
               <EmptyState
                 icon={<Activity />}
-                title="No activity yet"
-                text="Team runs and coordination events will appear here."
+                title={t("teams.activityEmpty")}
+                text={t("teams.activityEmptyDescription")}
               />
             )}
           </div>
@@ -399,9 +428,65 @@ function providerRunner(provider: "claude" | "codex" | "pi" | "opencode"): Agent
   return provider === "claude" ? "claude-code" : provider
 }
 
-function activityLabel(type: string): string {
-  return type
-    .replace(/^team\./, "")
-    .replaceAll(".", " ")
-    .replaceAll("-", " ")
+function activityLabel(type: TeamEventType, t: TFunction): string {
+  return t(`teams.activityLabels.${ACTIVITY_KEYS[type]}`)
+}
+
+function statusLabel(status: string, t: TFunction): string {
+  if (
+    status === "accepted" ||
+    status === "approved" ||
+    status === "blocked" ||
+    status === "cancelled" ||
+    status === "cancelling" ||
+    status === "completed" ||
+    status === "failed" ||
+    status === "idle" ||
+    status === "in_progress" ||
+    status === "pending" ||
+    status === "queued" ||
+    status === "ready" ||
+    status === "rejected" ||
+    status === "removing" ||
+    status === "running" ||
+    status === "starting" ||
+    status === "stopped" ||
+    status === "waiting"
+  ) {
+    return t(`teams.status.${status}`)
+  }
+  return status
+}
+
+function connectionLabel(status: string | undefined, t: TFunction): string {
+  if (!status) return t("teams.connection.connecting")
+  if (status === "connected" || status === "connecting" || status === "disconnected" || status === "reconnecting")
+    return t(`teams.connection.${status}`)
+  return status
+}
+
+const ACTIVITY_KEYS: Record<TeamEventType, keyof typeof import("@/i18n/resources/en").default.teams.activityLabels> = {
+  "team.created": "created",
+  "team.updated": "updated",
+  "team.deleted": "deleted",
+  "team.session.updated": "sessionUpdated",
+  "team.member.added": "memberAdded",
+  "team.member.updated": "memberUpdated",
+  "team.member.removed": "memberRemoved",
+  "team.task.created": "taskCreated",
+  "team.task.updated": "taskUpdated",
+  "team.spawn.requested": "spawnRequested",
+  "team.spawn.resolved": "spawnResolved",
+  "team.run.accepted": "runAccepted",
+  "team.run.started": "runStarted",
+  "team.run.updated": "runUpdated",
+  "team.run.completed": "runCompleted",
+  "team.run.cancelled": "runCancelled",
+  "team.run.failed": "runFailed",
+  "team.child-turn.queued": "childTurnQueued",
+  "team.child-turn.started": "childTurnStarted",
+  "team.child-turn.completed": "childTurnCompleted",
+  "team.child-turn.cancelled": "childTurnCancelled",
+  "team.child-turn.failed": "childTurnFailed",
+  "team.message.sent": "messageSent",
 }

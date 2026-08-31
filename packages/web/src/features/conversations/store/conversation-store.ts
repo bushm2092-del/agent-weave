@@ -4,6 +4,7 @@ import { immer } from "zustand/middleware/immer"
 
 import type { ConversationConnectionStatus, ConversationView } from "@/features/conversations/conversation-view.types"
 import { applyConversationEvent } from "@/features/conversations/store/apply-conversation-event"
+import type { PresentableError } from "@/i18n"
 
 type ConversationStore = {
   conversations: Record<string, ConversationView>
@@ -12,7 +13,7 @@ type ConversationStore = {
   applyEvents: (events: ConversationEvent[]) => void
   upsertRun: (run: Run) => void
   setConnectionStatus: (conversationId: string, status: ConversationConnectionStatus) => void
-  setError: (conversationId: string, error?: string) => void
+  setError: (conversationId: string, error?: PresentableError) => void
   remove: (conversationId: string) => void
 }
 

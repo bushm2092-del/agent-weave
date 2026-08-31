@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url"
 import { promisify } from "node:util"
 import { app, BrowserWindow, dialog, net, protocol, shell } from "electron"
 import type { AgentWeaveServer } from "@agent-weave/server/embedded"
+import { startupFailureCopy } from "./startup-copy.js"
 
 const APP_SCHEME = "agent-weave"
 const APP_ORIGIN = `${APP_SCHEME}://app`
@@ -28,9 +29,7 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 function webRoot(): string {
-  return app.isPackaged
-    ? path.join(process.resourcesPath, "web")
-    : path.resolve(import.meta.dirname, "../../web/dist")
+  return app.isPackaged ? path.join(process.resourcesPath, "web") : path.resolve(import.meta.dirname, "../../web/dist")
 }
 
 function resolveWebAsset(pathname: string): string {
@@ -111,10 +110,7 @@ async function hydrateShellPath(): Promise<void> {
 
   const userShell = process.env.SHELL?.trim() || (process.platform === "darwin" ? "/bin/zsh" : "/bin/sh")
   try {
-    const { stdout } = await execFileAsync(userShell, [
-      "-ilc",
-      `printf '${SHELL_PATH_MARKER}%s\\n' "$PATH"`,
-    ], {
+    const { stdout } = await execFileAsync(userShell, ["-ilc", `printf '${SHELL_PATH_MARKER}%s\\n' "$PATH"`], {
       encoding: "utf8",
       timeout: 10_000,
       maxBuffer: 1024 * 1024,
@@ -122,7 +118,10 @@ async function hydrateShellPath(): Promise<void> {
     const markerIndex = stdout.lastIndexOf(SHELL_PATH_MARKER)
     if (markerIndex < 0) throw new Error("The login shell did not return PATH.")
 
-    const shellPath = stdout.slice(markerIndex + SHELL_PATH_MARKER.length).split(/\r?\n/, 1)[0]?.trim()
+    const shellPath = stdout
+      .slice(markerIndex + SHELL_PATH_MARKER.length)
+      .split(/\r?\n/, 1)[0]
+      ?.trim()
     if (!shellPath) throw new Error("The login shell returned an empty PATH.")
     process.env.PATH = mergePath(shellPath, process.env.PATH)
   } catch (error) {
@@ -136,19 +135,24 @@ function mergePath(primary: string, fallback: string | undefined): string {
   )
 }
 
-app.whenReady().then(async () => {
-  await hydrateShellPath()
-  await startEmbeddedServer()
-  await protocol.handle(APP_SCHEME, handleAppRequest)
-  createWindow()
+app
+  .whenReady()
+  .then(async () => {
+    await hydrateShellPath()
+    await startEmbeddedServer()
+    await protocol.handle(APP_SCHEME, handleAppRequest)
+    createWindow()
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
   })
-}).catch((error: unknown) => {
-  dialog.showErrorBox("AgentWeave failed to start", error instanceof Error ? error.stack || error.message : String(error))
-  app.quit()
-})
+  .catch((error: unknown) => {
+    const copy = startupFailureCopy(app.getLocale())
+    const diagnostics = error instanceof Error ? error.stack || error.message : String(error)
+    dialog.showErrorBox(copy.title, `${copy.messagePrefix}${diagnostics}`)
+    app.quit()
+  })
 
 app.on("before-quit", () => {
   if (embeddedServer) void embeddedServer.close()

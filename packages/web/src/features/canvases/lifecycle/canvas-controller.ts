@@ -1,4 +1,5 @@
 import type { CanvasSummary, CreateCanvasRequest, UpdateCanvasRequest } from "@agent-weave/contracts"
+import { appI18n, toErrorPresentation } from "@/i18n"
 import { canvasApi } from "../api"
 import { useCanvasStore } from "../store"
 
@@ -12,7 +13,7 @@ class CanvasController {
       useCanvasStore.getState().setCanvases(canvases)
       return canvases
     } catch (error) {
-      useCanvasStore.getState().setError(messageOf(error))
+      useCanvasStore.getState().setError(toErrorPresentation(error, "errors.fallbacks.loadCanvases"))
       throw error
     } finally {
       useCanvasStore.getState().setLoading(false)
@@ -44,7 +45,7 @@ class CanvasController {
 
   async duplicate(source: CanvasSummary): Promise<CanvasSummary> {
     const created = await this.create({
-      name: `${source.name} copy`,
+      name: appI18n.t("canvas.defaults.copyName", { name: source.name }),
       description: source.description,
       accent: source.accent,
     })
@@ -62,10 +63,6 @@ class CanvasController {
       throw error
     }
   }
-}
-
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : "Unable to load canvases."
 }
 
 export const canvasController = new CanvasController()

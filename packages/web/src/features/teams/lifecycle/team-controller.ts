@@ -1,7 +1,7 @@
 import type { Team, TeamEvent } from "@agent-weave/contracts"
 import { openTeamEventStream, teamApi } from "@/features/teams/api"
 import { teamStore } from "@/features/teams/store"
-import { ApiClientError } from "@/lib/api"
+import { toErrorPresentation } from "@/i18n"
 
 type ActiveConnection = { cancelled: boolean; source?: EventSource }
 type TeamEventListener = (event: TeamEvent) => void
@@ -72,7 +72,7 @@ class TeamController {
       await teamApi.delete(teamId)
       teamStore.getState().remove(teamId)
     } catch (error) {
-      teamStore.getState().setError(teamId, errorMessage(error))
+      teamStore.getState().setError(teamId, toErrorPresentation(error, "errors.fallbacks.teamRequest"))
       if (teamStore.getState().teams[teamId]?.team) this.connect(teamId)
       throw error
     }
@@ -140,14 +140,9 @@ class TeamController {
       if (!isCurrent()) return
       connection.cancelled = true
       this.connections.delete(teamId)
-      teamStore.getState().setError(teamId, errorMessage(error))
+      teamStore.getState().setError(teamId, toErrorPresentation(error, "errors.fallbacks.teamRequest"))
     }
   }
-}
-
-function errorMessage(error: unknown): string {
-  if (error instanceof ApiClientError) return error.message
-  return error instanceof Error ? error.message : "The team request failed."
 }
 
 export const teamController = new TeamController()
