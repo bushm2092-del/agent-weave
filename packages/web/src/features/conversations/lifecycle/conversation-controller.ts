@@ -2,7 +2,7 @@ import type { Conversation, ConversationEvent } from "@agent-weave/contracts"
 
 import { conversationApi, openConversationEventStream } from "@/features/conversations/api"
 import { conversationStore } from "@/features/conversations/store"
-import { ApiClientError } from "@/lib/api"
+import { toErrorPresentation } from "@/i18n"
 
 type ActiveConnection = {
   cancelled: boolean
@@ -30,7 +30,9 @@ class ConversationController {
       await conversationApi.delete(conversationId)
       conversationStore.getState().remove(conversationId)
     } catch (error) {
-      conversationStore.getState().setError(conversationId, errorMessage(error))
+      conversationStore
+        .getState()
+        .setError(conversationId, toErrorPresentation(error, "errors.fallbacks.conversationRequest"))
       throw error
     }
   }
@@ -71,7 +73,9 @@ class ConversationController {
       })
     } catch (error) {
       this.connections.delete(conversationId)
-      conversationStore.getState().setError(conversationId, errorMessage(error))
+      conversationStore
+        .getState()
+        .setError(conversationId, toErrorPresentation(error, "errors.fallbacks.conversationRequest"))
     }
   }
 
@@ -90,11 +94,6 @@ class ConversationController {
 
 export function updateConversationSnapshot(conversation: Conversation): void {
   conversationStore.getState().prepareReplay(conversation)
-}
-
-function errorMessage(error: unknown): string {
-  if (error instanceof ApiClientError) return error.message
-  return error instanceof Error ? error.message : "The conversation request failed."
 }
 
 export const conversationController = new ConversationController()

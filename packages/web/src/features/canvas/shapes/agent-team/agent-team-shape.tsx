@@ -11,7 +11,9 @@ import {
   type TLBaseShape,
   type TLShape,
 } from "tldraw"
+import { useTranslation } from "react-i18next"
 import { TeamHeader } from "@/features/teams"
+import { appI18n } from "@/i18n"
 
 export type AgentTeamShape = TLBaseShape<"agent-team", { w: number; h: number; name: string; teamId: string }>
 
@@ -41,7 +43,7 @@ export class AgentTeamShapeUtil extends BaseFrameLikeShapeUtil<AgentTeamShape> {
   })
 
   override getDefaultProps(): AgentTeamShape["props"] {
-    return { w: 980, h: 700, name: "Agent team", teamId: "" }
+    return { w: 980, h: 700, name: appI18n.t("canvas.defaults.teamName"), teamId: "" }
   }
 
   override getGeometry(shape: AgentTeamShape) {
@@ -73,6 +75,7 @@ export class AgentTeamShapeUtil extends BaseFrameLikeShapeUtil<AgentTeamShape> {
 }
 
 function AgentTeamCard({ editor, shape }: { editor: Editor; shape: AgentTeamShape }) {
+  const { t } = useTranslation()
   return (
     <HTMLContainer className="agent-team-shape" style={{ width: shape.props.w, height: shape.props.h }}>
       {shape.props.teamId ? (
@@ -81,9 +84,9 @@ function AgentTeamCard({ editor, shape }: { editor: Editor; shape: AgentTeamShap
         <div className="agent-team-shape__header">
           <div>
             <strong>{shape.props.name}</strong>
-            <span>Legacy canvas group · Create a new team to enable collaboration</span>
+            <span>{t("teams.legacyDescription")}</span>
           </div>
-          <span className="agent-team-shape__mode">Local group</span>
+          <span className="agent-team-shape__mode">{t("teams.localGroup")}</span>
         </div>
       )}
     </HTMLContainer>

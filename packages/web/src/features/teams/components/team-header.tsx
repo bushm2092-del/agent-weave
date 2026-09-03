@@ -1,20 +1,26 @@
 import { LoaderCircle, Play, Send, Square, Users } from "lucide-react"
 import { useState, type PointerEvent } from "react"
+import { useTranslation } from "react-i18next"
+import type { TFunction } from "i18next"
 import type { Editor } from "tldraw"
 import { teamApi } from "@/features/teams/api"
 import { useTeamStore } from "@/features/teams/store"
-import { ApiClientError } from "@/lib/api"
+import { formatNumber, localizeErrorPresentation, toErrorPresentation, type PresentableError } from "@/i18n"
 
 export function TeamHeader({ editor, teamId, fallbackName }: { editor: Editor; teamId: string; fallbackName: string }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.resolvedLanguage === "zh-CN" ? "zh-CN" : "en"
   const view = useTeamStore((state) => state.teams[teamId])
   const [composing, setComposing] = useState(false)
   const [message, setMessage] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [cancellingRunId, setCancellingRunId] = useState<string>()
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<PresentableError>()
   const team = view?.team
   const activeRun = team?.activeRun
   const cancelling = Boolean(activeRun && cancellingRunId === activeRun.id)
+  const totalTasks = team?.tasks.length ?? 0
+  const completedTasks = team?.tasks.filter((task) => task.status === "completed").length ?? 0
 
   const handlePointer = (event: PointerEvent<HTMLElement>) => editor.markEventAsHandled(event)
   const send = async () => {
@@ -27,7 +33,7 @@ export function TeamHeader({ editor, teamId, fallbackName }: { editor: Editor; t
       setMessage("")
       setComposing(false)
     } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "Unable to start the team run.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.startTeamRun"))
     } finally {
       setSubmitting(false)
     }
@@ -41,7 +47,7 @@ export function TeamHeader({ editor, teamId, fallbackName }: { editor: Editor; t
       await teamApi.cancelRun(teamId, activeRun.id)
     } catch (requestError) {
       setCancellingRunId(undefined)
-      setError(requestError instanceof ApiClientError ? requestError.message : "Unable to cancel the team run.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.cancelTeamRun"))
     }
   }
 
@@ -50,9 +56,18 @@ export function TeamHeader({ editor, teamId, fallbackName }: { editor: Editor; t
       <div className="agent-team-shape__identity">
         <strong>{team?.name ?? fallbackName}</strong>
         <span>
-          <Users /> {team?.members.length ?? 0} members ·{" "}
-          {team?.tasks.filter((task) => task.status === "completed").length ?? 0}/{team?.tasks.length ?? 0} tasks ·
-          Shared workspace
+          <Users />{" "}
+          {t("teams.memberCount", {
+            count: team?.members.length ?? 0,
+            formattedCount: formatNumber(team?.members.length ?? 0, locale),
+          })}{" "}
+          ·{" "}
+          {t("teams.taskCount", {
+            count: totalTasks,
+            formattedCompleted: formatNumber(completedTasks, locale),
+            formattedTotal: formatNumber(totalTasks, locale),
+          })}{" "}
+          · {t("teams.sharedWorkspace")}
         </span>
       </div>
       <div className="agent-team-shape__controls" onPointerDown={handlePointer} onPointerUp={handlePointer}>
@@ -61,11 +76,11 @@ export function TeamHeader({ editor, teamId, fallbackName }: { editor: Editor; t
           className="agent-team-shape__status"
           data-status={activeRun?.status ?? team?.sessionStatus ?? "starting"}
         >
-          {statusLabel(activeRun?.status ?? team?.sessionStatus)}
+          {statusLabel(activeRun?.status ?? team?.sessionStatus, t)}
         </span>
         {activeRun ? (
           <button
-            aria-label="Cancel team run"
+            aria-label={t("teams.cancelRun")}
             disabled={cancelling || activeRun.status === "cancelling"}
             type="button"
             onClick={() => void cancel()}
@@ -74,7 +89,7 @@ export function TeamHeader({ editor, teamId, fallbackName }: { editor: Editor; t
           </button>
         ) : (
           <button
-            aria-label="Run team"
+            aria-label={t("teams.run")}
             disabled={!team || team.sessionStatus !== "ready"}
             type="button"
             onClick={() => setComposing((open) => !open)}
@@ -91,10 +106,10 @@ export function TeamHeader({ editor, teamId, fallbackName }: { editor: Editor; t
           onPointerUp={handlePointer}
         >
           <textarea
-            aria-label="Team goal"
+            aria-label={t("teams.goal")}
             autoFocus
             rows={3}
-            placeholder="Give the team a goal..."
+            placeholder={t("teams.goalPlaceholder")}
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             onKeyDown={(event) => {
@@ -105,30 +120,39 @@ export function TeamHeader({ editor, teamId, fallbackName }: { editor: Editor; t
             }}
           />
           <button
-            aria-label="Send team goal"
+            aria-label={t("teams.sendGoal")}
             disabled={!message.trim() || submitting}
             type="button"
             onClick={() => void send()}
           >
             {submitting ? <LoaderCircle className="animate-spin" /> : <Send />}
           </button>
-          {error && <p role="alert">{error}</p>}
+          {error && <p role="alert">{localizeErrorPresentation(error, t)}</p>}
         </div>
       )}
       {!composing && error && (
         <p className="team-run-error" role="alert">
-          {error}
+          {localizeErrorPresentation(error, t)}
         </p>
       )}
     </div>
   )
 }
 
-function statusLabel(status?: string): string {
-  if (!status || status === "starting" || status === "accepted") return "Starting"
-  if (status === "ready") return "Ready"
-  if (status === "running") return "Running"
-  if (status === "cancelling") return "Stopping"
-  if (status === "failed") return "Failed"
-  return status[0]!.toUpperCase() + status.slice(1)
+function statusLabel(status: string | undefined, t: TFunction): string {
+  if (!status) return t("teams.status.starting")
+  if (
+    status === "starting" ||
+    status === "accepted" ||
+    status === "ready" ||
+    status === "running" ||
+    status === "cancelling" ||
+    status === "failed" ||
+    status === "completed" ||
+    status === "cancelled" ||
+    status === "stopped"
+  ) {
+    return t(`teams.status.${status}`)
+  }
+  return status
 }

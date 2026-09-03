@@ -1,9 +1,10 @@
 import { Hand, ShieldCheck } from "lucide-react"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { conversationApi } from "@/features/conversations/api"
 import type { PendingPermission } from "@/features/conversations/conversation-view.types"
-import { ApiClientError } from "@/lib/api"
+import { localizeErrorPresentation, toErrorPresentation, type PresentableError } from "@/i18n"
 
 export function PermissionRequest({
   conversationId,
@@ -12,8 +13,9 @@ export function PermissionRequest({
   conversationId: string
   permission: PendingPermission
 }) {
+  const { t } = useTranslation()
   const [resolving, setResolving] = useState<string>()
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<PresentableError>()
 
   const decide = async (optionId: string) => {
     setResolving(optionId)
@@ -21,18 +23,18 @@ export function PermissionRequest({
     try {
       await conversationApi.decidePermission(conversationId, permission.runId, permission.id, { optionId })
     } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "Permission response failed.")
+      setError(toErrorPresentation(requestError, "errors.fallbacks.permissionResponse"))
       setResolving(undefined)
     }
   }
 
   return (
-    <section className="permission-request" aria-label="Permission required">
+    <section className="permission-request" aria-label={t("conversations.permissionRequired")}>
       <div className="permission-request__title">
         <Hand aria-hidden="true" />
         <div>
-          <strong>Permission required</strong>
-          <span>{toolDescription(permission.toolCall)}</span>
+          <strong>{t("conversations.permissionRequired")}</strong>
+          <span>{toolDescription(permission.toolCall, t("conversations.permissionFallback"))}</span>
         </div>
       </div>
       <div className="permission-request__options">
@@ -45,20 +47,20 @@ export function PermissionRequest({
             onClick={() => void decide(option.optionId)}
           >
             <ShieldCheck aria-hidden="true" />
-            {resolving === option.optionId ? "Applying..." : option.name}
+            {resolving === option.optionId ? t("conversations.applying") : option.name}
           </button>
         ))}
       </div>
-      {error && <p className="permission-request__error">{error}</p>}
+      {error && <p className="permission-request__error">{localizeErrorPresentation(error, t)}</p>}
     </section>
   )
 }
 
-function toolDescription(value: unknown): string {
-  if (!value || typeof value !== "object") return "The agent wants to perform an operation."
+function toolDescription(value: unknown, fallback: string): string {
+  if (!value || typeof value !== "object") return fallback
   const tool = value as Record<string, unknown>
   for (const key of ["title", "name", "kind"]) {
     if (typeof tool[key] === "string") return tool[key]
   }
-  return "The agent wants to perform an operation."
+  return fallback
 }
