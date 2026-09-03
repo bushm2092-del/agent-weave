@@ -7,7 +7,12 @@ import { useState } from "react"
 import { useCanvasStore } from "@/features/canvases"
 import { ApiClientError } from "@/lib/api"
 
-import { localizeErrorPresentation, toErrorPresentation, type ErrorPresentation } from "./errors"
+import {
+  localizeErrorPresentation,
+  ownedErrorPresentation,
+  toErrorPresentation,
+  type ErrorPresentation,
+} from "./errors"
 import { createAppI18n } from "./i18n"
 
 afterEach(() => {
@@ -31,6 +36,21 @@ describe("reactive error presentation", () => {
     await userEvent.click(screen.getByRole("button", { name: "switch locale" }))
     expect(screen.getByRole("alert")).toHaveTextContent("无法连接到 AgentWeave 服务器。")
     expect(presentation).toMatchObject({ code: "NETWORK_ERROR", message: "raw network copy" })
+  })
+
+  it("relocalizes a client-owned protocol error without reconnecting", async () => {
+    const presentation = ownedErrorPresentation("errors.client.teamEventMalformed")
+    const i18n = createAppI18n({ initialLocale: "en", storage: null })
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LocalStateHarness error={presentation} />
+      </I18nextProvider>,
+    )
+
+    expect(screen.getByRole("alert")).toHaveTextContent("The server sent malformed team event data.")
+    await userEvent.click(screen.getByRole("button", { name: "switch locale" }))
+    expect(screen.getByRole("alert")).toHaveTextContent("服务器发送的团队事件数据格式错误。")
   })
 
   it("keeps an unknown external error byte-for-byte identical after a locale switch", async () => {

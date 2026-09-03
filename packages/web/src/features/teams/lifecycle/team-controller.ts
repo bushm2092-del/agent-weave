@@ -1,7 +1,7 @@
 import type { Team, TeamEvent } from "@agent-weave/contracts"
 import { openTeamEventStream, teamApi } from "@/features/teams/api"
 import { teamStore } from "@/features/teams/store"
-import { toErrorPresentation } from "@/i18n"
+import { ownedErrorPresentation, toErrorPresentation } from "@/i18n"
 
 type ActiveConnection = { cancelled: boolean; source?: EventSource }
 type TeamEventListener = (event: TeamEvent) => void
@@ -118,7 +118,7 @@ class TeamController {
         onEvent: (event) => {
           if (!isCurrent()) return
           if (event.teamId !== teamId) {
-            teamStore.getState().setError(teamId, "The server sent an event for the wrong team.")
+            teamStore.getState().setError(teamId, ownedErrorPresentation("errors.client.teamEventUnexpected"))
             return
           }
           teamStore.getState().applyEvent(event)
@@ -132,8 +132,8 @@ class TeamController {
           if (!isCurrent()) return
           teamStore.getState().setConnectionStatus(teamId, connected ? "connected" : "reconnecting")
         },
-        onProtocolError: (message) => {
-          if (isCurrent()) teamStore.getState().setError(teamId, message)
+        onProtocolError: (error) => {
+          if (isCurrent()) teamStore.getState().setError(teamId, error)
         },
       })
     } catch (error) {

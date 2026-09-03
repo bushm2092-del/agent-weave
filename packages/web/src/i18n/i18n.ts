@@ -1,6 +1,13 @@
 import { createInstance, type i18n } from "i18next"
 
-import { detectSystemLocale, loadStoredLocale, saveLocale, type AppLocale } from "./locale"
+import {
+  detectSystemLocale,
+  loadStoredLocale,
+  resolveLocalePreference,
+  saveLocalePreference,
+  type AppLocale,
+  type LocalePreference,
+} from "./locale"
 import en from "./resources/en"
 import zhCN from "./resources/zh-CN"
 
@@ -56,7 +63,8 @@ export function createAppI18n(options: CreateAppI18nOptions = {}): i18n {
 
 export const appI18n = createAppI18n()
 
-export async function setAppLocale(locale: AppLocale): Promise<void> {
+export async function setAppLocale(preference: LocalePreference): Promise<void> {
+  const locale = resolveLocalePreference(preference, systemLanguages())
   await appI18n.changeLanguage(locale)
-  saveLocale(browserStorage(), locale)
+  saveLocalePreference(browserStorage(), preference)
 }

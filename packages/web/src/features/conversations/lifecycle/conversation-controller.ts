@@ -69,7 +69,7 @@ class ConversationController {
           if (connection.cancelled) return
           conversationStore.getState().setConnectionStatus(conversationId, connected ? "connected" : "reconnecting")
         },
-        onProtocolError: (message) => conversationStore.getState().setError(conversationId, message),
+        onProtocolError: (error) => conversationStore.getState().setError(conversationId, error),
       })
     } catch (error) {
       this.connections.delete(conversationId)
