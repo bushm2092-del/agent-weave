@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
 import { MarkdownMessage } from "@/components/markdown"
@@ -173,31 +174,33 @@ flowchart LR
 ]
 
 export function MessageRenderPage() {
+  const { t } = useTranslation()
+
   return (
     <main className="message-render-debugger">
       <header className="message-render-debugger__header">
-        <Link to="/" aria-label="Back to AgentWeave">
+        <Link to="/" aria-label={t("debug.backToAgentWeave")}>
           <ArrowLeft />
         </Link>
         <div>
-          <strong>MessageRender</strong>
-          <span>Production component mocks</span>
+          <strong>{t("debug.message.title")}</strong>
+          <span>{t("debug.message.subtitle")}</span>
         </div>
       </header>
       <section className="message-render-debugger__stage">
-        <div className="message-render-debugger__section-label">Event-composed AI message</div>
+        <div className="message-render-debugger__section-label">{t("debug.message.eventComposed")}</div>
         <div className="message-render-debugger__conversation message-render-debugger__conversation--compact">
           {eventComposedMessages.map((message) => (
             <MessageRender key={message.id} message={message} />
           ))}
         </div>
-        <div className="message-render-debugger__section-label">Message states</div>
+        <div className="message-render-debugger__section-label">{t("debug.message.states")}</div>
         <div className="message-render-debugger__conversation">
           {messages.map((message) => (
             <MessageRender key={message.id} message={message} />
           ))}
         </div>
-        <div className="message-render-debugger__section-label">Streamdown</div>
+        <div className="message-render-debugger__section-label">{t("debug.message.streamdown")}</div>
         <div className="message-render-debugger__streamdown">
           <MarkdownMessage streaming={false}>{streamdownMock}</MarkdownMessage>
         </div>

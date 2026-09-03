@@ -1,6 +1,7 @@
 import type { Team, TeamEvent, TeamMember, TeamRun, TeamSpawnRequest, TeamTask } from "@agent-weave/contracts"
 import { create } from "zustand"
 import { immer } from "zustand/middleware/immer"
+import type { PresentableError } from "@/i18n"
 
 export type TeamConnectionStatus = "idle" | "connecting" | "connected" | "reconnecting"
 
@@ -11,7 +12,7 @@ export type TeamView = {
   lastSequence: number
   connectionStatus: TeamConnectionStatus
   loading: boolean
-  error?: string
+  error?: PresentableError
 }
 
 type TeamStore = {
@@ -19,7 +20,7 @@ type TeamStore = {
   prepareReplay: (team: Team) => void
   applyEvent: (event: TeamEvent) => void
   setConnectionStatus: (teamId: string, status: TeamConnectionStatus) => void
-  setError: (teamId: string, error?: string) => void
+  setError: (teamId: string, error?: PresentableError) => void
   remove: (teamId: string) => void
 }
 

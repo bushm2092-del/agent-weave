@@ -1,5 +1,6 @@
 import { Bot, FileSearch, Hand, MousePointer2, Users } from "lucide-react"
 import { type Editor, useEditor, useValue } from "tldraw"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 
@@ -12,6 +13,7 @@ export function CanvasToolbar({
   onCreateTeam: () => void
   onCreateFilePreview: (editor: Editor) => void
 }) {
+  const { t } = useTranslation()
   const editor = useEditor()
   const activeTool = useValue("canvas toolbar active tool", () => editor.getCurrentToolId(), [editor])
 
@@ -22,12 +24,12 @@ export function CanvasToolbar({
   }
 
   return (
-    <div className="canvas-toolbox" role="toolbar" aria-label="Canvas tools">
+    <div className="canvas-toolbox" role="toolbar" aria-label={t("canvas.tools.label")}>
       <Button
         size="icon"
         variant={activeTool === "select" ? "default" : "ghost"}
-        aria-label="Select"
-        title="Select"
+        aria-label={t("canvas.tools.select")}
+        title={t("canvas.tools.select")}
         onClick={() => selectTool("select")}
       >
         <MousePointer2 />
@@ -35,20 +37,38 @@ export function CanvasToolbar({
       <Button
         size="icon"
         variant={activeTool === "hand" ? "default" : "ghost"}
-        aria-label="Hand tool"
-        title="Hand tool"
+        aria-label={t("canvas.tools.hand")}
+        title={t("canvas.tools.hand")}
         onClick={() => selectTool("hand")}
       >
         <Hand />
       </Button>
       <span className="canvas-toolbox__divider" aria-hidden="true" />
-      <Button size="icon" variant="ghost" aria-label="New agent" title="New agent" onClick={() => openCreator(onCreateAgent)}>
+      <Button
+        size="icon"
+        variant="ghost"
+        aria-label={t("canvas.tools.newAgent")}
+        title={t("canvas.tools.newAgent")}
+        onClick={() => openCreator(onCreateAgent)}
+      >
         <Bot />
       </Button>
-      <Button size="icon" variant="ghost" aria-label="New agent team" title="New agent team" onClick={() => openCreator(onCreateTeam)}>
+      <Button
+        size="icon"
+        variant="ghost"
+        aria-label={t("canvas.tools.newTeam")}
+        title={t("canvas.tools.newTeam")}
+        onClick={() => openCreator(onCreateTeam)}
+      >
         <Users />
       </Button>
-      <Button size="icon" variant="ghost" aria-label="New file preview" title="New file preview" onClick={() => openCreator(() => onCreateFilePreview(editor))}>
+      <Button
+        size="icon"
+        variant="ghost"
+        aria-label={t("canvas.tools.newFilePreview")}
+        title={t("canvas.tools.newFilePreview")}
+        onClick={() => openCreator(() => onCreateFilePreview(editor))}
+      >
         <FileSearch />
       </Button>
     </div>

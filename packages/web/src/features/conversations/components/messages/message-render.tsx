@@ -1,10 +1,12 @@
 import type { MessageAttachment, RunStatus } from "@agent-weave/contracts"
 import { AlertCircle, Brain, ChevronRight, Clock3, Image, Paperclip } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { MarkdownMessage } from "@/components/markdown"
 import { ToolCallItem } from "@/features/conversations/components/messages/tool-call-item"
 import { PermissionRequest } from "@/features/conversations/components/permissions/permission-request"
 import type { PendingPermission, ToolActivity } from "@/features/conversations/conversation-view.types"
+import { formatNumber } from "@/i18n"
 
 type MessageUsage = {
   inputTokens?: number
@@ -35,6 +37,7 @@ export type MessageRenderPart =
   | { id: string; type: "permission"; permission: PendingPermission }
 
 export function MessageRender({ message, conversationId }: { message: MessageRenderData; conversationId?: string }) {
+  const { t } = useTranslation()
   if (message.role === "user") {
     return (
       <div className="conversation-message conversation-message--user" data-message-id={message.id}>
@@ -68,14 +71,14 @@ export function MessageRender({ message, conversationId }: { message: MessageRen
       {status === "failed" ? (
         <p className="conversation-message__error">
           <AlertCircle />
-          {message.error || "The run failed."}
+          {message.error || t("conversations.runFailed")}
         </p>
       ) : status === "cancelled" ? (
-        <p className="conversation-message__muted">Run stopped</p>
+        <p className="conversation-message__muted">{t("conversations.runStopped")}</p>
       ) : !hasContent && (status === "queued" || status === "running") ? (
         <p className="conversation-message__working">
           <span className="conversation-loader" aria-hidden="true" />
-          {status === "queued" ? "Queued" : "Working"}
+          {status === "queued" ? t("conversations.queued") : t("conversations.working")}
         </p>
       ) : null}
       {message.usage && <UsageSummary usage={message.usage} />}
@@ -110,13 +113,20 @@ function groupActivityParts(parts: MessageRenderPart[]): GroupedRenderPart[] {
 }
 
 function ToolsGroup({ parts }: { parts: ActivityPart[] }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.resolvedLanguage === "zh-CN" ? "zh-CN" : "en"
   const running = parts.some((part) => part.type === "tool" && !isToolComplete(part.tool.status))
   return (
     <details className="tools-group">
       <summary>
         <ChevronRight aria-hidden="true" />
-        <span>{running ? "处理中" : "已处理"}</span>
-        <small>{parts.length} 项</small>
+        <span>{running ? t("conversations.toolGroupRunning") : t("conversations.toolGroupComplete")}</span>
+        <small>
+          {t("conversations.toolGroupCount", {
+            count: parts.length,
+            formattedCount: formatNumber(parts.length, locale),
+          })}
+        </small>
       </summary>
       <div className="tools-group__items">
         {parts.map((part) =>
@@ -132,11 +142,12 @@ function ToolsGroup({ parts }: { parts: ActivityPart[] }) {
 }
 
 function ThoughtPart({ part }: { part: Extract<MessageRenderPart, { type: "thought" }> }) {
+  const { t } = useTranslation()
   return (
     <details className="thought-section">
       <summary>
         <Brain aria-hidden="true" />
-        Thought process
+        {t("conversations.thoughtProcess")}
       </summary>
       <p>{part.content}</p>
     </details>
@@ -148,12 +159,13 @@ function isToolComplete(status?: string): boolean {
 }
 
 function MessageAttachments({ attachments }: { attachments: MessageAttachment[] }) {
+  const { t } = useTranslation()
   return (
     <div className="conversation-message__attachments">
       {attachments.map((attachment, index) => (
         <span key={`${attachment.type}-${index}`}>
           {attachment.type === "image" ? <Image /> : <Paperclip />}
-          {attachment.type === "image" ? attachment.name || "Image" : attachment.path}
+          {attachment.type === "image" ? attachment.name || t("common.image") : attachment.path}
         </span>
       ))}
     </div>
@@ -161,11 +173,19 @@ function MessageAttachments({ attachments }: { attachments: MessageAttachment[] 
 }
 
 function UsageSummary({ usage }: { usage: MessageUsage }) {
+  const { t, i18n } = useTranslation()
   const total = usage.totalTokens ?? (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
+  const locale = i18n.resolvedLanguage === "zh-CN" ? "zh-CN" : "en"
   return (
-    <span className="usage-summary" title={`Input ${usage.inputTokens ?? 0}, output ${usage.outputTokens ?? 0}`}>
+    <span
+      className="usage-summary"
+      title={t("conversations.usageTitle", {
+        input: formatNumber(usage.inputTokens ?? 0, locale),
+        output: formatNumber(usage.outputTokens ?? 0, locale),
+      })}
+    >
       <Clock3 />
-      {total.toLocaleString()} tokens
+      {t("conversations.tokenCount", { count: total, formattedCount: formatNumber(total, locale) })}
     </span>
   )
 }
