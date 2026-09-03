@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { detectSystemLocale, loadStoredLocale, normalizeLocale, saveLocale } from "./locale"
+import {
+  detectSystemLocale,
+  loadStoredLocale,
+  normalizeLocale,
+  resolveLocalePreference,
+  saveLocale,
+  saveLocalePreference,
+} from "./locale"
 
 function storageWith(key: string, value: string): Storage {
   const storage = new Map([[key, value]])
@@ -28,6 +35,11 @@ describe("locale policy", () => {
 
   it("detects Chinese from the system language priority list", () => {
     expect(detectSystemLocale(["zh-Hans-CN", "en-US"])).toBe("zh-CN")
+  })
+
+  it("resolves system and explicit locale preferences", () => {
+    expect(resolveLocalePreference("system", ["zh-Hans-CN", "en-US"])).toBe("zh-CN")
+    expect(resolveLocalePreference("en", ["zh-CN"])).toBe("en")
   })
 
   it.each([
@@ -69,5 +81,18 @@ describe("locale policy", () => {
     }
 
     expect(() => saveLocale(restrictedStorage, "en")).not.toThrow()
+  })
+
+  it("removes the manual override when returning to the system preference", () => {
+    const storage = storageWith("agent-weave:locale", "en")
+
+    saveLocalePreference(storage, "system")
+
+    expect(storage.getItem("agent-weave:locale")).toBeNull()
+    const restrictedStorage = storageWith("agent-weave:locale", "en")
+    restrictedStorage.removeItem = () => {
+      throw new Error("blocked")
+    }
+    expect(() => saveLocalePreference(restrictedStorage, "system")).not.toThrow()
   })
 })

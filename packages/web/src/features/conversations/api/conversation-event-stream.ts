@@ -1,13 +1,14 @@
 import { conversationEventSchema, conversationEventTypeSchema, type ConversationEvent } from "@agent-weave/contracts"
 
 import { environment } from "@/config/env"
+import { ownedErrorPresentation, type OwnedErrorPresentation } from "@/i18n"
 
 export type ConversationEventStreamOptions = {
   conversationId: string
   after: number
   onEvent: (event: ConversationEvent) => void
   onConnectionChange: (connected: boolean) => void
-  onProtocolError: (message: string) => void
+  onProtocolError: (error: OwnedErrorPresentation) => void
 }
 
 export function openConversationEventStream(options: ConversationEventStreamOptions): EventSource {
@@ -26,12 +27,12 @@ export function openConversationEventStream(options: ConversationEventStreamOpti
     try {
       const parsed = conversationEventSchema.safeParse(JSON.parse(message.data))
       if (!parsed.success) {
-        options.onProtocolError("The server sent an invalid conversation event.")
+        options.onProtocolError(ownedErrorPresentation("errors.client.conversationEventInvalid"))
         return
       }
       options.onEvent(parsed.data)
     } catch {
-      options.onProtocolError("The server sent malformed conversation event data.")
+      options.onProtocolError(ownedErrorPresentation("errors.client.conversationEventMalformed"))
     }
   }
 
