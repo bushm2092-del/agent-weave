@@ -3,6 +3,7 @@ import { createShapeId, type Editor, type TLShapeId } from "tldraw"
 import type { AgentRunner } from "@/features/canvas/agent-options"
 import type { AgentShape } from "@/features/canvas/shapes/agent"
 import type { AgentTeamShape } from "@/features/canvas/shapes/agent-team"
+import { ownedErrorPresentation } from "@/i18n"
 
 const programmaticDeletes = new Set<TLShapeId>()
 
@@ -83,7 +84,7 @@ export function createTeamProjection(editor: Editor, team: Team): AgentTeamShape
     },
     { history: "ignore" },
   )
-  if (!projection) throw new Error("Unable to create the team projection.")
+  if (!projection) throw ownedErrorPresentation("errors.client.teamProjectionFailed")
   return projection
 }
 

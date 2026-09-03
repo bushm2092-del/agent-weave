@@ -1,12 +1,13 @@
 import { teamEventSchema, teamEventTypeSchema, type TeamEvent } from "@agent-weave/contracts"
 import { environment } from "@/config/env"
+import { ownedErrorPresentation, type OwnedErrorPresentation } from "@/i18n"
 
 export type TeamEventStreamOptions = {
   teamId: string
   after: number
   onEvent: (event: TeamEvent) => void
   onConnectionChange: (connected: boolean) => void
-  onProtocolError: (message: string) => void
+  onProtocolError: (error: OwnedErrorPresentation) => void
 }
 
 export function openTeamEventStream(options: TeamEventStreamOptions): EventSource {
@@ -21,12 +22,12 @@ export function openTeamEventStream(options: TeamEventStreamOptions): EventSourc
     try {
       const parsed = teamEventSchema.safeParse(JSON.parse(message.data))
       if (!parsed.success) {
-        options.onProtocolError("The server sent an invalid team event.")
+        options.onProtocolError(ownedErrorPresentation("errors.client.teamEventInvalid"))
         return
       }
       options.onEvent(parsed.data)
     } catch {
-      options.onProtocolError("The server sent malformed team event data.")
+      options.onProtocolError(ownedErrorPresentation("errors.client.teamEventMalformed"))
     }
   }
   for (const eventType of teamEventTypeSchema.options) {

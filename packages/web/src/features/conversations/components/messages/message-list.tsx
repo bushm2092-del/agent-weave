@@ -1,10 +1,12 @@
 import { Bot } from "lucide-react"
 import { useEffect, useRef } from "react"
+import { useTranslation } from "react-i18next"
 
 import { RunMessage } from "@/features/conversations/components/messages/run-message"
 import type { ConversationView } from "@/features/conversations/conversation-view.types"
 
 export function MessageList({ conversationId, view }: { conversationId: string; view: ConversationView }) {
+  const { t } = useTranslation()
   const listRef = useRef<HTMLDivElement>(null)
   const lastRun = view.runs.at(-1)
 
@@ -17,8 +19,8 @@ export function MessageList({ conversationId, view }: { conversationId: string; 
       {!view.runs.length && (
         <div className="conversation-empty">
           <Bot aria-hidden="true" />
-          <strong>Ready for a task</strong>
-          <span>Send a message to start working in this workspace.</span>
+          <strong>{t("conversations.readyForTask")}</strong>
+          <span>{t("conversations.readyDescription")}</span>
         </div>
       )}
       {view.runs.map((run) => (

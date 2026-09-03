@@ -1,4 +1,5 @@
 import type { Conversation, PermissionOption, Run } from "@agent-weave/contracts"
+import type { PresentableError } from "@/i18n"
 
 export type ConversationConnectionStatus = "idle" | "connecting" | "connected" | "reconnecting"
 
@@ -36,5 +37,5 @@ export type ConversationView = {
   lastSequence: number
   connectionStatus: ConversationConnectionStatus
   loading: boolean
-  error?: string
+  error?: PresentableError
 }

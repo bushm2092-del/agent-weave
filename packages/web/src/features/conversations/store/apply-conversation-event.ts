@@ -14,6 +14,7 @@ import type {
   RunRenderPart,
   ToolActivity,
 } from "@/features/conversations/conversation-view.types"
+import { ownedErrorPresentation } from "@/i18n"
 
 export function applyConversationEvent(view: Draft<ConversationView>, event: ConversationEvent): void {
   if (!event.transient && event.sequence <= view.lastSequence) return
@@ -29,7 +30,8 @@ export function applyConversationEvent(view: Draft<ConversationView>, event: Con
     const data = record(event.data)
     const conversation = conversationSchema.safeParse(data?.conversation)
     if (conversation.success) view.conversation = conversation.data
-    view.error = typeof data?.error === "string" ? data.error : "The agent failed to initialize."
+    view.error =
+      typeof data?.error === "string" ? data.error : ownedErrorPresentation("errors.client.agentInitializationFailed")
     return
   }
   if (event.type === "config.updated") {

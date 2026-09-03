@@ -9,6 +9,7 @@
     "dev": "concurrently -k -s first \"node scripts/ensure-server.mjs\" \"pnpm --filter @agent-weave/web dev --host 127.0.0.1\" \"wait-on http-get://127.0.0.1:5173 && cross-env ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron .\"",
     "build": "pnpm --filter @agent-weave/server build && pnpm --filter @agent-weave/web build && tsc -p tsconfig.json",
     "lint": "oxlint src",
+    "test": "tsx --test test/**/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pack": "pnpm build && electron-builder --dir",
     "dist:mac": "pnpm build && electron-builder --mac",
@@ -24,6 +25,7 @@
     "electron": "^38.3.0",
     "electron-builder": "^26.0.12",
     "oxlint": "^1.79.0",
+    "tsx": "^4.23.1",
     "typescript": "~7.0.2",
     "wait-on": "^9.0.3"
   },
@@ -55,11 +57,17 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
@@ -67,11 +75,15 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },

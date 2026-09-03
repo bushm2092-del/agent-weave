@@ -1,6 +1,7 @@
 import type { AgentProvider } from "@agent-weave/contracts"
 import { AlertCircle, Maximize2, Minimize2, WifiOff } from "lucide-react"
 import { useEffect, type PointerEvent } from "react"
+import { useTranslation } from "react-i18next"
 
 import { AgentRunnerIcon } from "@/features/canvas/agent-runner-icon"
 import { ConfigOptionControls } from "@/features/conversations/components/configuration/config-option-controls"
@@ -8,6 +9,7 @@ import { PromptComposer } from "@/features/conversations/components/composer/pro
 import { MessageList } from "@/features/conversations/components/messages/message-list"
 import { conversationController } from "@/features/conversations/lifecycle"
 import { useConversationStore } from "@/features/conversations/store"
+import { localizeErrorPresentation } from "@/i18n"
 
 export function ConversationWindow({
   conversationId,
@@ -32,6 +34,7 @@ export function ConversationWindow({
   onToggleFullscreen: () => void
   teamTarget?: { teamId: string; slotId: string }
 }) {
+  const { t } = useTranslation()
   const view = useConversationStore((state) => state.conversations[conversationId])
 
   useEffect(() => {
@@ -51,13 +54,13 @@ export function ConversationWindow({
           <span>{providerLabel}</span>
         </div>
         <span className="agent-shape__status" data-status={status}>
-          {statusLabel(status)}
+          {statusLabel(status, t)}
         </span>
         <button
           className="agent-shape__fullscreen-button"
           type="button"
-          aria-label={fullscreen ? "Exit fullscreen" : "Open agent fullscreen"}
-          title={fullscreen ? "Exit fullscreen (Esc)" : "Open agent fullscreen"}
+          aria-label={fullscreen ? t("conversations.exitFullscreen") : t("conversations.openFullscreen")}
+          title={fullscreen ? t("conversations.exitFullscreenEsc") : t("conversations.openFullscreenEsc")}
           onClick={onToggleFullscreen}
           onPointerDown={onInteract}
           onPointerUp={onInteract}
@@ -73,18 +76,18 @@ export function ConversationWindow({
         ) : (
           <div className="conversation-loading">
             <span className="conversation-loader" />
-            Connecting to {provider}...
+            {t("conversations.connectingTo", { provider })}
           </div>
         )}
         {view?.error && (
           <div className="conversation-error">
-            <AlertCircle /> <span>{view.error}</span>
+            <AlertCircle /> <span>{localizeErrorPresentation(view.error, t)}</span>
           </div>
         )}
         {view?.connectionStatus === "reconnecting" && (
           <div className="conversation-connection">
             <WifiOff />
-            Reconnecting...
+            {t("conversations.reconnecting")}
           </div>
         )}
         <PromptComposer
@@ -103,9 +106,12 @@ export function ConversationWindow({
   )
 }
 
-function statusLabel(status: "initializing" | "ready" | "running" | "failed"): string {
-  if (status === "initializing") return "Starting"
-  if (status === "running") return "Working"
-  if (status === "failed") return "Failed"
-  return "Ready"
+function statusLabel(
+  status: "initializing" | "ready" | "running" | "failed",
+  t: ReturnType<typeof useTranslation>["t"],
+): string {
+  if (status === "initializing") return t("conversations.status.starting")
+  if (status === "running") return t("conversations.status.working")
+  if (status === "failed") return t("conversations.status.failed")
+  return t("conversations.status.ready")
 }
